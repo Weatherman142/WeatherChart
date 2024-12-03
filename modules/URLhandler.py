@@ -1,4 +1,5 @@
 import json
+import xmltodict
 import requests
 
 # This functions prints the responses to all of the common errors the program may encounter.
@@ -32,7 +33,7 @@ def URLstatusResponder(errorCode, pageTitle):
 
 
 # Collects and returns the JSON data present at the given link.
-def URLcollector(api_URL, pageTitle):
+def URLcollectorJSON(api_URL, pageTitle):
     responseText = requests.get(api_URL)
 
     # In event that there is an error in retrieving the data from the API, try again once. 
@@ -49,3 +50,22 @@ def URLcollector(api_URL, pageTitle):
         raise SystemExit(URLstatusResponder(responseText.status_code, pageTitle))
     
     return dataJSON
+
+# Collects and returns the JSON data present at the given link.
+def URLcollectorDWML(api_URL, pageTitle):
+    responseText = requests.get(api_URL)
+
+    # In event that there is an error in retrieving the data from the API, try again once. 
+    if(responseText.status_code != 200):
+        responseText = requests.get(api_URL)
+
+    # Checks response status code. If it is not successful, returns an error message with the status.
+    if(responseText.status_code == 200):
+        # Load the web response into a JSON data structure.
+        dataXML = xmltodict.parse(responseText.content)
+    else:
+        # Stops further blocks from executing, preventing downstream errors.
+        # Sends a short text description of the error and the returned code.
+        raise SystemExit(URLstatusResponder(responseText.status_code, pageTitle))
+    
+    return dataXML
