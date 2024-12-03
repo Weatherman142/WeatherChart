@@ -44,6 +44,8 @@ def URLcollectorJSON(api_URL, pageTitle):
     if(responseText.status_code == 200):
         # Load the web response into a JSON data structure.
         dataJSON = json.loads(json.dumps(responseText.json()))
+    elif(responseText.status_code == 404):
+        dataJSON = []
     else:
         # Stops further blocks from executing, preventing downstream errors.
         # Sends a short text description of the error and the returned code.
