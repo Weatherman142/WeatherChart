@@ -53,7 +53,7 @@ def URLcollectorJSON(api_URL, pageTitle):
     
     return dataJSON
 
-# Collects and returns the JSON data present at the given link.
+# Collects and returns the DWML data present at the given link.
 def URLcollectorDWML(api_URL, pageTitle):
     responseText = requests.get(api_URL)
 
