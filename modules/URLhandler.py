@@ -24,7 +24,7 @@ def URLstatusResponder(errorCode, pageTitle):
         case 502:
             response = "Bad gateway. Server likely got an invalid response somwehere for " + pageTitle + " (502)."
         case 503:
-            response = "The server isn't ready to handle the request (503)."
+            response = "The server isn't ready to handle the request or is down for " + pageTitle + " (503)."
         case _:
             response = "Something unusual happened. Here's the error code (" + str(errorCode) + ") for the page " + pageTitle + "."
     
@@ -44,7 +44,7 @@ def URLcollectorJSON(api_URL, pageTitle):
     if(responseText.status_code == 200):
         # Load the web response into a JSON data structure.
         dataJSON = json.loads(json.dumps(responseText.json()))
-    elif(responseText.status_code == 404):
+    elif(responseText.status_code == 503):
         dataJSON = []
     else:
         # Stops further blocks from executing, preventing downstream errors.
