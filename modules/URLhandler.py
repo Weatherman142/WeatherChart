@@ -37,7 +37,7 @@ def URLstatusResponder(errorCode, pageTitle):
 # Collects and returns the JSON data present at the given link.
 def URLcollectorJSON(api_URL, pageTitle):
     headers = {
-        'User-Agent': 'Alex Hamilton, alexhamilton0403@gmail.com'
+        'User-Agent': 'Alex Hamilton, alexhamilton0403@gmail.com, personal use'
     }
     
     responseText = requests.get(api_URL, headers=headers)
