@@ -19,6 +19,8 @@ def URLstatusResponder(errorCode, pageTitle):
             response = "The page for " + pageTitle + " either can't be found or no longer exists (404)."
         case 418:
             response = "The server is a teapot and refuses to brew coffee."
+        case 429:
+            response = "Too many requests too quickly are being made to " + pageTitle + " (429)."
         case 500:
             response = "The server has run into an Internal Server Error (500)."
         case 502:
@@ -34,11 +36,16 @@ def URLstatusResponder(errorCode, pageTitle):
 
 # Collects and returns the JSON data present at the given link.
 def URLcollectorJSON(api_URL, pageTitle):
-    responseText = requests.get(api_URL)
+    headers = {
+        'User-Agent': 'Alex Hamilton, alexhamilton0403@gmail.com'
+    }
+    
+    responseText = requests.get(api_URL, headers=headers)
 
     # In event that there is an error in retrieving the data from the API, try again once. 
-    if(responseText.status_code != 200):
-        responseText = requests.get(api_URL)
+    # Don't try again if the program has made too many requests already.
+    if(responseText.status_code != 200 and responseText.status_code != 429):
+        responseText = requests.get(api_URL, headers=headers)
 
     # Checks response status code. If it is not successful, returns an error message with the status.
     if(responseText.status_code == 200):
