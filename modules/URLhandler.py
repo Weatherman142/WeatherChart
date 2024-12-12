@@ -1,4 +1,5 @@
 import json
+import xmltodict
 import requests
 
 # This functions prints the responses to all of the common errors the program may encounter.
@@ -23,7 +24,7 @@ def URLstatusResponder(errorCode, pageTitle):
         case 502:
             response = "Bad gateway. Server likely got an invalid response somwehere for " + pageTitle + " (502)."
         case 503:
-            response = "The server isn't ready to handle the request (503)."
+            response = "The server isn't ready to handle the request or is down for " + pageTitle + " (503)."
         case _:
             response = "Something unusual happened. Here's the error code (" + str(errorCode) + ") for the page " + pageTitle + "."
     
@@ -32,7 +33,7 @@ def URLstatusResponder(errorCode, pageTitle):
 
 
 # Collects and returns the JSON data present at the given link.
-def URLcollector(api_URL, pageTitle):
+def URLcollectorJSON(api_URL, pageTitle):
     responseText = requests.get(api_URL)
 
     # In event that there is an error in retrieving the data from the API, try again once. 
@@ -43,9 +44,30 @@ def URLcollector(api_URL, pageTitle):
     if(responseText.status_code == 200):
         # Load the web response into a JSON data structure.
         dataJSON = json.loads(json.dumps(responseText.json()))
+    elif(responseText.status_code == 503):
+        dataJSON = []
     else:
         # Stops further blocks from executing, preventing downstream errors.
         # Sends a short text description of the error and the returned code.
         raise SystemExit(URLstatusResponder(responseText.status_code, pageTitle))
     
     return dataJSON
+
+# Collects and returns the DWML data present at the given link.
+def URLcollectorDWML(api_URL, pageTitle):
+    responseText = requests.get(api_URL)
+
+    # In event that there is an error in retrieving the data from the API, try again once. 
+    if(responseText.status_code != 200):
+        responseText = requests.get(api_URL)
+
+    # Checks response status code. If it is not successful, returns an error message with the status.
+    if(responseText.status_code == 200):
+        # Load the web response into a JSON data structure.
+        dataXML = xmltodict.parse(responseText.content)
+    else:
+        # Stops further blocks from executing, preventing downstream errors.
+        # Sends a short text description of the error and the returned code.
+        raise SystemExit(URLstatusResponder(responseText.status_code, pageTitle))
+    
+    return dataXML
