@@ -50,7 +50,7 @@ def URLcollectorJSON(api_URL, pageTitle):
     # Checks response status code. If it is not successful, returns an error message with the status.
     if(responseText.status_code == 200):
         # Load the web response into a JSON data structure.
-        dataJSON = json.loads(json.dumps(responseText.json()))
+        dataJSON = responseText.json()
     elif(responseText.status_code == 503):
         dataJSON = []
     else:
