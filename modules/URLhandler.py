@@ -50,7 +50,7 @@ def URLcollectorJSON(api_URL, pageTitle):
     # Checks response status code. If it is not successful, returns an error message with the status.
     if(responseText.status_code == 200):
         # Load the web response into a JSON data structure.
-        dataJSON = json.loads(json.dumps(responseText.json()))
+        dataJSON = responseText.json()
     elif(responseText.status_code == 503):
         dataJSON = []
     else:
@@ -60,12 +60,17 @@ def URLcollectorJSON(api_URL, pageTitle):
     
     return dataJSON
 
+
 # Collects and returns the DWML data present at the given link.
 def URLcollectorDWML(api_URL, pageTitle):
-    responseText = requests.get(api_URL)
+    headers = {
+        'User-Agent': 'Alex Hamilton, alexhamilton0403@gmail.com, personal use'
+    }
+
+    responseText = requests.get(api_URL, headers=headers)
 
     # In event that there is an error in retrieving the data from the API, try again once. 
-    if(responseText.status_code != 200):
+    if(responseText.status_code != 200 and responseText.status_code != 429):
         responseText = requests.get(api_URL)
 
     # Checks response status code. If it is not successful, returns an error message with the status.
