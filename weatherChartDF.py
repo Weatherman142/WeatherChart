@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[3]:
 
 
 import math
 import numpy as np
 import pandas as pd
 import datetime
-get_ipython().run_line_magic('matplotlib', 'inline')
+#%matplotlib inline
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from metpy.plots import StationPlot #, sky_cover, current_weather
@@ -21,7 +21,7 @@ import modules.timeHandler as timeHandler
 
 # This block prompts the user for input and modifies it to ensure that the inputs are valid as often as possible.
 
-# In[2]:
+# In[4]:
 
 
 # Rounding is performed because the API can't handle precision higher than 4 places.
@@ -33,10 +33,12 @@ lon = round(float(input("Enter the longitude of the city (e.g. Ames: -93.62, KOW
 if(lon > 0): lon *= -1
 lat = abs(lat)
 
+saveImage = True
+
 
 # This grabs the metadata for the specified point. These are the city, state, WFO office, and grid x and y for forecasts.
 
-# In[3]:
+# In[5]:
 
 
 # This URL grabs metadata for the given point.
@@ -54,7 +56,7 @@ gridYpoint = dataPoints['properties']['gridY']
 
 # This block collects and places it into a single variable for later use.
 
-# In[4]:
+# In[6]:
 
 
 # This grabs the hourly forecast information for the given grid point.
@@ -77,7 +79,7 @@ if(forecastSuccess):
 
 # Finds the closest stations to the gridpoint and sends the closest station on to the next block.
 
-# In[5]:
+# In[7]:
 
 
 # This grabs the list of the nearest stations to the grid point.
@@ -91,7 +93,7 @@ stationID = dataStations['features'][0]['properties']['stationIdentifier']
 
 # Collects the recent observations and sends it to a single variable.
 
-# In[6]:
+# In[8]:
 
 
 # Once the closest station has been found, get the observations from it.
@@ -103,7 +105,7 @@ dataStationHistLength = len(dataStationHist['features'])
 
 # Norwegian weather data.
 
-# In[7]:
+# In[9]:
 
 
 # This grabs the hourly forecast information for the given grid point.
@@ -121,7 +123,7 @@ if(useNorwegian):
 
 # Collects NDFD data, primarily for use in API outages.
 
-# In[8]:
+# In[10]:
 
 
 # If the hourly API call fails, then pull from the NDFD. Takes ~1.8 seconds to run.
@@ -133,7 +135,7 @@ if(not(forecastSuccess)):
     dataNDFD = URLhandler.URLcollectorDWML(api_URL, "NDFD data (XML)")
 
 
-# In[9]:
+# In[11]:
 
 
 if(not(forecastSuccess)):
@@ -166,7 +168,7 @@ if(not(forecastSuccess)):
 
 # After the above block, internet access is no longer required. If somewhere above fails, these cells will not execute.
 
-# In[10]:
+# In[12]:
 
 
 # Naming here makes it much easier to handle in the event I want to change the names.
@@ -185,7 +187,7 @@ precipTypesName = "precipType"
 
 # This section takes the variable with the forecast data and sends it to a handful of other lists, one for each needed variable.
 
-# In[11]:
+# In[13]:
 
 
 # Checks if there is data in the forecast. Needed because of year-change 503 error.
@@ -211,22 +213,22 @@ if(forecastSuccess):
     count1 = 0
     for i in dataForecastPeriods:
         # For some of these, it is as easy as grabbing the data directly from the JSON file.
-        dfForecast[timeName][count1] = i['startTime']
-        dfForecast[temperatureName][count1] = i['temperature']
+        dfForecast.loc[count1, timeName] = i['startTime']
+        dfForecast.loc[count1, temperatureName] = i['temperature']
         # Convert dew points from Celsius to Fahrenheit. 
         # Weirdly, the NWS provides the temperature in Fahrenheit right next to it...
-        dfForecast[dewpointName][count1] = (i['dewpoint']['value'] * units('degC')).to('degF').magnitude
-        dfForecast[rhName][count1] = i['relativeHumidity']['value']
-        dfForecast[popName][count1] = i['probabilityOfPrecipitation']['value']
+        dfForecast.loc[count1, dewpointName] = (i['dewpoint']['value'] * units('degC')).to('degF').magnitude
+        dfForecast.loc[count1, rhName] = i['relativeHumidity']['value']
+        dfForecast.loc[count1, popName] = i['probabilityOfPrecipitation']['value']
 
         # Wind data is returned as a string with letters (e.g. "15 mph"). This extracts the numbers and turns them to ints.
         # Technically this fails for winds greater than or equal to 100 mph.
         # I haven't seen this explicitly forecasted ever, so hopefully this never becomes an issue...
-        dfForecast[windSpeedName][count1] = int(i['windSpeed'][0] + i['windSpeed'][1])
-        dfForecast[windDirName][count1] = i['windDirection']
+        dfForecast.loc[count1, windSpeedName] = int(i['windSpeed'][0] + i['windSpeed'][1])
+        dfForecast.loc[count1, windDirName] = i['windDirection']
 
         # Used for plotting daytime/nighttime on the graph.
-        dfForecast[nightName][count1] = i['isDaytime']
+        dfForecast.loc[count1, nightName] = i['isDaytime']
         
         # Determine the precip type, and add the color corresponding to the type to its list.
         # If no precipitation is found in this forecast period, set the color to none.
@@ -245,15 +247,16 @@ if(forecastSuccess):
         else:
             precipColor = 'none'
 
-        dfForecast[precipTypesName][count1] = precipColor
+        dfForecast.loc[count1, precipTypesName] = precipColor
         count1 += 1
 
 
 # Norwegian forecasting data.
 
-# In[12]:
+# In[14]:
 
 
+# With the NWS issue outlined in PNS 24-66 fixed, the Norwegian plotting will be depreciated in a future update.
 if(useNorwegian):
     # Creates the dictionary with all of the important variables.
     # The names are defined above so I can change them much easier.
@@ -272,24 +275,24 @@ if(useNorwegian):
     dfNorForecast = pd.DataFrame(dictNorForecast)
 
     # This section crawls through the list of forecast periods and takes out relevant information.
-    count1 = 0
+    count2 = 0
     for i in norForecastPeriods:
         # For some of these, it is as easy as grabbing the data directly from the JSON file.
-        dfNorForecast[timeName][count1] = i['time']
-        dfNorForecast[temperatureName][count1] = (i['data']['instant']['details']['air_temperature'] * units('degC')).to('degF').magnitude
-        dfNorForecast[dewpointName][count1] = (i['data']['instant']['details']['dew_point_temperature'] * units('degC')).to('degF').magnitude
-        dfNorForecast[rhName][count1] = i['data']['instant']['details']['relative_humidity']
+        dfNorForecast[timeName][count2] = i['time']
+        dfNorForecast[temperatureName][count2] = (i['data']['instant']['details']['air_temperature'] * units('degC')).to('degF').magnitude
+        dfNorForecast[dewpointName][count2] = (i['data']['instant']['details']['dew_point_temperature'] * units('degC')).to('degF').magnitude
+        dfNorForecast[rhName][count2] = i['data']['instant']['details']['relative_humidity']
         #dfNorForecast[popName][count1] = i['data']['next_6_hours']['details']['precipitation_amount']
 
         # Pulls wind data from the API.
-        dfNorForecast[windSpeedName][count1] = i['data']['instant']['details']['wind_speed']
-        dfNorForecast[windDirName][count1] = i['data']['instant']['details']['wind_from_direction']
-        count1 += 1
+        dfNorForecast[windSpeedName][count2] = i['data']['instant']['details']['wind_speed']
+        dfNorForecast[windDirName][count2] = i['data']['instant']['details']['wind_from_direction']
+        count2 += 1
 
 
 # Does similar to the above cell, but with observations instead, sending each to its respective list.
 
-# In[13]:
+# In[15]:
 
 
 # If the station has a null value for anything, it replaces with nan so math works.
@@ -313,7 +316,7 @@ dictHistory = {timeName:        [None]*dataStationHistLength,
 dfHistory = pd.DataFrame(dictHistory)
 
 # This loop grabs the relevant data from the historical data's JSON response.
-count1 = 0
+count2 = 0
 for i in dataStationHist['features']:
     
     # Handles if values are equal to null in the JSON response.
@@ -339,21 +342,21 @@ for i in dataStationHist['features']:
     initDirection = (initDirection * units('deg')).to('rad').magnitude
 
     # After checking if the temperature or wind are null, append the value determined above to their lists.
-    dfHistory[temperatureName][count1] = initTemp
-    dfHistory[dewpointName][count1] = initDew
-    dfHistory[rhName][count1] = initRH
-    dfHistory[windSpeedName][count1] = initWind
-    dfHistory[windDirName][count1] = initDirection
+    dfHistory.loc[count2, temperatureName] = initTemp
+    dfHistory.loc[count2, dewpointName] = initDew
+    dfHistory.loc[count2, rhName] = initRH
+    dfHistory.loc[count2, windSpeedName] = initWind
+    dfHistory.loc[count2, windDirName] = initDirection
     
     # Append the timestamps to another list.
-    dfHistory[timeName][count1] = i['properties']['timestamp']
+    dfHistory.loc[count2, timeName] = i['properties']['timestamp']
 
-    count1 += 1
+    count2 += 1
 
 
 # Converts the winds from polar coordinates to Cartesian coordinates. MetPy takes in (u,v) to generate its wind barbs.
 
-# In[14]:
+# In[16]:
 
 
 # Since the NWS returns forecasted wind directions as a set of letters, there needs to be a conversion into numerical values.
@@ -364,20 +367,18 @@ windAngleDirections = [np.pi, 9*np.pi/8, 5*np.pi/4, 11*np.pi/8, 3*np.pi/2, 13*np
 
 if(forecastSuccess):
     # This loop calculates the x and y wind components of the forecasted data...
-    #count1 = 0
     for i in range(len(dfForecast[windDirName])):
         # Checks if the program has gone through the wind direction conversion already.
         if(type(dfForecast[windDirName][i]) == str):
             # This finds the item in the wind angles that corresponds with the 1 to 3 letter wind forecast.
-            dfForecast[windDirName][i] = windAngleDirections[windLetterDirections.index(dfForecast[windDirName][i])]
+            dfForecast.loc[i, windDirName] = windAngleDirections[windLetterDirections.index(dfForecast[windDirName][i])]
 
             # This calculates the components of the wind (x and y), which is necessary for MetPy's wind barbs.
-            dfForecast[windSpeedName][i] = ((dfForecast[windSpeedName][i]*np.sin(dfForecast[windDirName][i])), \
-                                            (dfForecast[windSpeedName][i]*np.cos(dfForecast[windDirName][i])),
-                                            (dfForecast[windSpeedName][i]))
+            dfForecast.loc[i, windSpeedName] = ((dfForecast.loc[i, windSpeedName]*np.sin(dfForecast.loc[i, windDirName])), \
+                                                (dfForecast.loc[i, windSpeedName]*np.cos(dfForecast.loc[i, windDirName])),
+                                                (dfForecast.loc[i, windSpeedName]))
 else:
     # ...this one calculates for NDFD forecast data...
-    #count1 = 0
     for i in range(len(NDFDwinds)):
         # Checks if the program has gone through the wind direction conversion already.
         if(type(NDFDwinds[i]) == int):
@@ -391,7 +392,6 @@ else:
 
 if(useNorwegian):
     #...this one calculates for Norwegian data...
-    #count1 = 0
     for i in dfNorForecast[windDirName]:
         # Checks if the program has gone through the wind direction conversion already.
         if(type(dfNorForecast[windSpeedName][i]) != tuple):
@@ -402,7 +402,6 @@ if(useNorwegian):
             dfNorForecast[windSpeedName][i] = ((dfNorForecast[windSpeedName][i]*np.sin(dfNorForecast[windDirName][i])), \
                                                (dfNorForecast[windSpeedName][i]*np.cos(dfNorForecast[windDirName][i])),
                                                (dfNorForecast[windSpeedName][i]))
-        #count1 += 1
     
 # ...while this loop calculates the x and y components of the historical wind data.
 #count2 = 0
@@ -410,15 +409,14 @@ for j in range(len(dfHistory[windSpeedName])):
     # Checks to see if the type of the windSpeed is a float or a tuple to see if the operation has already been performed.
     if(type(dfHistory[windSpeedName][j]) != tuple):
         # This calculates and appends the x and y components of the historic winds for the MetPy barbs.
-        dfHistory[windSpeedName][j] = ((-dfHistory[windSpeedName][j]*np.sin(dfHistory[windDirName][j])), \
-                                       (-dfHistory[windSpeedName][j]*np.cos(dfHistory[windDirName][j])),
-                                       (dfHistory[windSpeedName][j]))
-    #count2 += 1
+        dfHistory.loc[j, windSpeedName] = ((-dfHistory.loc[j, windSpeedName]*np.sin(dfHistory.loc[j, windDirName])), \
+                                       (-dfHistory.loc[j, windSpeedName]*np.cos(dfHistory.loc[j, windDirName])),
+                                       (dfHistory.loc[j, windSpeedName]))
 
 
 # Defines the heat index function then runs it on the forecast and observations.
 
-# In[15]:
+# In[17]:
 
 
 heatIndexList = []
@@ -452,7 +450,7 @@ dfHistory[heatIndexName] = heatIndexList
 
 # Defines the wind chill calculation and performs it on the forecasts and observations.
 
-# In[16]:
+# In[18]:
 
 
 windChillList = []
@@ -486,7 +484,7 @@ dfHistory[windChillName] = windChillList
 
 # The timestamps need to be parsed into a usable format for later usage. The current datetime and datetime of the UNIX epoch are found.
 
-# In[17]:
+# In[19]:
 
 
 # Parses put the timestamps into a more usable format if they are not already in timestamp type.
@@ -515,7 +513,7 @@ tzOffset = 6/24
 
 # Clears the lists of nan values. Finds the lower and upper bounds for plotting. 
 
-# In[18]:
+# In[20]:
 
 
 # The upper and lower bounds are used to give enough clearance on the plot for the precip type boxes and the wind barbs.
@@ -545,7 +543,7 @@ else:
 
 # Finally, plots all of the data that was collected into a single plot.
 
-# In[19]:
+# In[ ]:
 
 
 plt.rcParams["figure.dpi"] = 200
@@ -584,9 +582,9 @@ ax.plot(dfHistory[timeName], dfHistory[temperatureName], color='xkcd:pinkish red
 # The bounds of the plot are set as 2 days before now and the ending timestamp, and the upper and lower temp bounds.
 # The lower and upper bounds are the temperature mins and maxs, with a constant offset.
 if(forecastSuccess):
-    plt.axis([dateOffset - 2, dfForecast[timeName].iloc[-1], tempsLowerBound, tempsUpperBound])
+    plt.axis([dateOffset - 1, dfForecast[timeName].iloc[-1], tempsLowerBound, tempsUpperBound])
 else:
-    plt.axis([dateOffset - 2, NDFDtimestamp[-1], tempsLowerBound, tempsUpperBound])
+    plt.axis([dateOffset - 1, NDFDtimestamp[-1], tempsLowerBound, tempsUpperBound])
 # Adjustable sizing for the size and location of the precip bar at the top of the chart.
 # Also determines the location of the wind barbs. 
 # This keeps everything consistent between cities with different amounts of daily variation.
@@ -704,7 +702,11 @@ fig.autofmt_xdate()
 leg = ax.legend(loc=(0.13, -0.25), ncol=4)
 
 # Show the plot.
-plt.show()
+if(saveImage):
+    plt.savefig("images/local.png", bbox_inches="tight")
+    print("Image saved as /images/local.png.")
+else:
+    plt.show()
 
 
 # In[ ]:

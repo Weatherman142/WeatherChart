@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[26]:
+# In[1]:
 
 
 import datetime
@@ -15,7 +15,7 @@ import modules.URLhandler as URLhandler
 import modules.timeHandler as timeHandler
 
 
-# In[27]:
+# In[2]:
 
 
 darkMode = False
@@ -24,8 +24,10 @@ axisColor = "xkcd:light grey"
 
 timeName = 'timestamp'
 
+saveImage = True
 
-# In[28]:
+
+# In[3]:
 
 
 # This acquires the short-term DSCOVR data.
@@ -36,7 +38,7 @@ timeName = 'timestamp'
 #dataDSCOVR = URLhandler.URLcollectorJSON(api_urlDSCOVR, "DSCOVR short-term")
 
 
-# In[29]:
+# In[4]:
 
 
 # This acquires the estimated Kp index. Not the same as the actual Kp index.
@@ -45,7 +47,7 @@ api_urlKP = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json"
 dataKP = URLhandler.URLcollectorJSON(api_urlKP, "Kp index")
 
 
-# In[30]:
+# In[5]:
 
 
 # This acquires the real-time solar wind magnetometer data.
@@ -54,7 +56,7 @@ api_urlRTSWmag = "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json"
 dataRTSWmag = URLhandler.URLcollectorJSON(api_urlRTSWmag, "RTSW mag")
 
 
-# In[31]:
+# In[6]:
 
 
 # This acquires the real-time solar wind proton data.
@@ -63,7 +65,7 @@ api_urlRTSWwind = "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json"
 dataRTSWwind = URLhandler.URLcollectorJSON(api_urlRTSWwind, "RTSW wind")
 
 
-# In[32]:
+# In[7]:
 
 
 # This acquires the GOES X-ray data. Primary is usually GOES-18.
@@ -72,7 +74,7 @@ api_urlGOESxray = "https://services.swpc.noaa.gov/json/goes/primary/xrays-7-day.
 dataGOESxray = URLhandler.URLcollectorJSON(api_urlGOESxray, "GOES X-ray")
 
 
-# In[33]:
+# In[8]:
 
 
 # This acquires the latest significant X-ray flares.
@@ -81,7 +83,7 @@ api_urlFlares = "https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-
 dataFlares = URLhandler.URLcollectorJSON(api_urlFlares, "peak X-ray flares")
 
 
-# In[34]:
+# In[9]:
 
 
 # This acquires the proton flux data. Primary is usually GOES-18.
@@ -90,7 +92,7 @@ api_urlGOESproton = "https://services.swpc.noaa.gov/json/goes/primary/integral-p
 dataGOESproton = URLhandler.URLcollectorJSON(api_urlGOESproton, "GOES proton")
 
 
-# In[35]:
+# In[10]:
 
 
 # This acquires the low-energy proton data from ACE's EPAM instrument.
@@ -99,7 +101,7 @@ api_urlACEproton = "https://services.swpc.noaa.gov/json/ace/epam/ace_epam_5m.jso
 dataACEproton = URLhandler.URLcollectorJSON(api_urlACEproton, "ACE EPAM protons")
 
 
-# In[36]:
+# In[11]:
 
 
 # Processes the 1 Hz DSCOVR data.
@@ -125,7 +127,7 @@ dataACEproton = URLhandler.URLcollectorJSON(api_urlACEproton, "ACE EPAM protons"
 #     count01 += 1
 
 
-# In[37]:
+# In[12]:
 
 
 # Processes the minutely Kp data.
@@ -138,14 +140,14 @@ count02 = 0
 for i in dataKP:
     # This is the planetary Kp value. Updated every minute.
     # Seems to be revised upwards or downwards occasionally after the initial value.
-    KPdataframe['estimates'][count02] = i['estimated_kp']
+    KPdataframe.loc[count02, 'estimates'] = i['estimated_kp']
     
-    KPdataframe[timeName][count02] = i['time_tag']
+    KPdataframe.loc[count02, timeName] = i['time_tag']
 
     count02 += 1
 
 
-# In[38]:
+# In[13]:
 
 
 # Processes the minutely magnetometer data from either SOLAR-1 or ACE, depending on which is selected.
@@ -173,13 +175,13 @@ count03 = 0
 for i in dataRTSWmag:
     # SOLAR-1 is the current primary satellite for space weather observations.
     if((i['active'] and useActiveSat) or (i['source'] == RTSWdataSourceMain and not useActiveSat)):
-        RTSWmagDataframe['bt'][count03] = i['bt']
-        RTSWmagDataframe['bz'][count03] = i['bz_gsm']
-        RTSWmagDataframe['bx'][count03] = i['bx_gsm']
-        RTSWmagDataframe['by'][count03] = i['by_gsm']
+        RTSWmagDataframe.loc[count03, 'bt'] = i['bt']
+        RTSWmagDataframe.loc[count03, 'bz'] = i['bz_gsm']
+        RTSWmagDataframe.loc[count03, 'bx'] = i['bx_gsm']
+        RTSWmagDataframe.loc[count03, 'by'] = i['by_gsm']
 
-        RTSWmagDataframe['source'][count03] = i['source']
-        RTSWmagDataframe[timeName][count03] = i['time_tag']
+        RTSWmagDataframe.loc[count03, 'source'] = i['source']
+        RTSWmagDataframe.loc[count03, timeName] = i['time_tag']
 
         count03 += 1
 
@@ -189,18 +191,18 @@ count03 = 0
 if(RTSWmagDataframe[timeName][0] == None):
     for i in dataRTSWmag:
         if(i['source'] == RTSWdataSourceBackup):
-            RTSWmagDataframe['bt'][count03] = i['bt']
-            RTSWmagDataframe['bz'][count03] = i['bz_gsm']
-            RTSWmagDataframe['bx'][count03] = i['bx_gsm']
-            RTSWmagDataframe['by'][count03] = i['by_gsm']
+            RTSWmagDataframe.loc[count03, 'bt'] = i['bt']
+            RTSWmagDataframe.loc[count03, 'bz'] = i['bz_gsm']
+            RTSWmagDataframe.loc[count03, 'bx'] = i['bx_gsm']
+            RTSWmagDataframe.loc[count03, 'by'] = i['by_gsm']
 
-            RTSWmagDataframe['source'][count03] = i['source']
-            RTSWmagDataframe[timeName][count03] = i['time_tag']
+            RTSWmagDataframe.loc[count03, 'source'] = i['source']
+            RTSWmagDataframe.loc[count03, timeName] = i['time_tag']
 
             count03 += 1
 
 
-# In[39]:
+# In[14]:
 
 
 # Processes the minutely proton data from either DSCOVR or ACE, depending on which is selected above.
@@ -223,13 +225,13 @@ for i in dataRTSWwind:
         # For some reason, it is possible for density to be zero.
         # I suspect that the SWPC is truncating the density data which goes to zero at low values.
         if(i['proton_density'] != 0):
-            RTSWwindDataframe['density'][count04] = i['proton_density']
+            RTSWwindDataframe.loc[count04, 'density'] = i['proton_density']
         else:
-            RTSWwindDataframe['density'][count04] = None
-        RTSWwindDataframe['speed'][count04] = i['proton_speed']
-        RTSWwindDataframe['temps'][count04] = i['proton_temperature']
+            RTSWwindDataframe.loc[count04, 'density'] = None
+        RTSWwindDataframe.loc[count04, 'speed'] = i['proton_speed']
+        RTSWwindDataframe.loc[count04, 'temps'] = i['proton_temperature']
 
-        RTSWwindDataframe[timeName][count04] = i['time_tag']
+        RTSWwindDataframe.loc[count04, timeName] = i['time_tag']
 
         count04 += 1
 
@@ -242,18 +244,18 @@ if(RTSWwindDataframe[timeName][0] == None):
             # For some reason, it is possible for density to be zero.
             # I suspect that the SWPC is truncating the density data which goes to zero at low values.
             if(i['proton_density'] != 0):
-                RTSWwindDataframe['density'][count04] = i['proton_density']
+                RTSWwindDataframe.loc[count04, 'density'] = i['proton_density']
             else:
-                RTSWwindDataframe['density'][count04] = None
-            RTSWwindDataframe['speed'][count04] = i['proton_speed']
-            RTSWwindDataframe['temps'][count04] = i['proton_temperature']
+                RTSWwindDataframe.loc[count04, 'density'] = None
+            RTSWwindDataframe.loc[count04, 'speed'] = i['proton_speed']
+            RTSWwindDataframe.loc[count04, 'temps'] = i['proton_temperature']
 
-            RTSWwindDataframe[timeName][count04] = i['time_tag']
-            
+            RTSWwindDataframe.loc[count04, timeName] = i['time_tag']
+
             count04 += 1
 
 
-# In[40]:
+# In[15]:
 
 
 # Processes the GOES X-ray data.
@@ -272,17 +274,17 @@ for i in dataGOESxray:
     # Because the x-ray flux is separated into two different ranges,
     # we need to break it into short- and long-wave x-rays.
     if(i['energy'] == "0.05-0.4nm"):
-        GOESxrayDataframe['short'][count05] = i['flux']
+        GOESxrayDataframe.loc[count05, 'short'] = i['flux']
 
     if(i['energy'] == "0.1-0.8nm"):
-        GOESxrayDataframe['long'][count05] = i['flux']
+        GOESxrayDataframe.loc[count05, 'long'] = i['flux']
 
-        GOESxrayDataframe[timeName][count05] = i['time_tag']
+        GOESxrayDataframe.loc[count05, timeName] = i['time_tag']
 
         count05 += 1
 
 
-# In[41]:
+# In[16]:
 
 
 # Processes the significant flares over the last 7 days.
@@ -299,14 +301,14 @@ flaresDataframe = pd.DataFrame(dictFlares)
 count08 = 0
 for i in dataFlares:
     if(i['max_xrlong'] >= 0.00001):
-        flaresDataframe['maxClass'][count08] = i['max_class']
-        flaresDataframe['maxStrength'][count08] = i['max_xrlong']
-        flaresDataframe['maxTime'][count08] = i['max_time']
+        flaresDataframe.loc[count08, 'maxClass'] = i['max_class']
+        flaresDataframe.loc[count08, 'maxStrength'] = i['max_xrlong']
+        flaresDataframe.loc[count08, 'maxTime'] = i['max_time']
 
         count08 += 1
 
 
-# In[42]:
+# In[17]:
 
 
 # Processes the GOES proton flux data.
@@ -325,21 +327,21 @@ GOESprotonDataframe = pd.DataFrame(dictGOESproton)
 count06 = 0
 for i in dataGOESproton:
     if(i['energy'] == "\u003E=10 MeV"):
-        GOESprotonDataframe['10MeV'][count06] = i['flux']
+        GOESprotonDataframe.loc[count06, '10MeV'] = i['flux']
 
     if(i['energy'] == "\u003E=50 MeV"):
-        GOESprotonDataframe['50MeV'][count06] = i['flux']
+        GOESprotonDataframe.loc[count06, '50MeV'] = i['flux']
 
     if(i['energy'] == "\u003E=100 MeV"):
-        GOESprotonDataframe['100MeV'][count06] = i['flux']
+        GOESprotonDataframe.loc[count06, '100MeV'] = i['flux']
 
     if(i['energy'] == "\u003E=500 MeV"):
-        GOESprotonDataframe['500MeV'][count06] = i['flux']
-        GOESprotonDataframe[timeName][count06] = i['time_tag']
+        GOESprotonDataframe.loc[count06, '500MeV'] = i['flux']
+        GOESprotonDataframe.loc[count06, timeName] = i['time_tag']
         count06 += 1
 
 
-# In[43]:
+# In[18]:
 
 
 # Processes the ACE low-energy proton flux.
@@ -358,21 +360,21 @@ ACEprotonDataframe = pd.DataFrame(dictACEproton)
 
 count07 = 0
 for i in dataACEproton:
-    ACEprotonDataframe['p1'][count07] = i['p1']
-    ACEprotonDataframe['p2'][count07] = i['p2']
-    ACEprotonDataframe['p3'][count07] = i['p3']
-    ACEprotonDataframe['p4'][count07] = i['p4']
-    ACEprotonDataframe['p5'][count07] = i['p5']
-    ACEprotonDataframe['p6'][count07] = i['p6']
-    ACEprotonDataframe['p7'][count07] = i['p7']
-    ACEprotonDataframe['p8'][count07] = i['p8']
+    ACEprotonDataframe.loc[count07, 'p1'] = i['p1']
+    ACEprotonDataframe.loc[count07, 'p2'] = i['p2']
+    ACEprotonDataframe.loc[count07, 'p3'] = i['p3']
+    ACEprotonDataframe.loc[count07, 'p4'] = i['p4']
+    ACEprotonDataframe.loc[count07, 'p5'] = i['p5']
+    ACEprotonDataframe.loc[count07, 'p6'] = i['p6']
+    ACEprotonDataframe.loc[count07, 'p7'] = i['p7']
+    ACEprotonDataframe.loc[count07, 'p8'] = i['p8']
 
-    ACEprotonDataframe[timeName][count07] = i['time_tag']
+    ACEprotonDataframe.loc[count07, timeName] = i['time_tag']
 
     count07 += 1
 
 
-# In[44]:
+# In[19]:
 
 
 # Parse the timestamps into the correct format for plotting.
@@ -393,7 +395,7 @@ dateCurrent = datetime.datetime.now()
 dateOffset = (dateCurrent - dateInitial).total_seconds()/86400
 
 
-# In[45]:
+# In[20]:
 
 
 # Calculates the approximate conditions that are currently hitting Earth.
@@ -407,7 +409,7 @@ timeToArrivalMinutes = round(timeToArrival * (24 * 60))
 #print(timeToArrivalMinutes)
 
 
-# In[46]:
+# In[21]:
 
 
 # # Plots DSCOVR 1-second magnetometer data.
@@ -469,7 +471,7 @@ timeToArrivalMinutes = round(timeToArrival * (24 * 60))
 # plt.show()
 
 
-# In[47]:
+# In[22]:
 
 
 # Plots SOLAR-1/ACE 1-minute magnetometer and proton data.
@@ -581,10 +583,13 @@ ax5.set_xlabel("Time of Observation (UTC)")
 
 fig.autofmt_xdate()
 
-plt.show()
+if(saveImage):
+    plt.savefig("images/magnetometer.png", bbox_inches="tight")
+else:
+    plt.show()
 
 
-# In[48]:
+# In[23]:
 
 
 # Plots GOES X-ray data.
@@ -645,10 +650,13 @@ ax.set_ylabel("Flux (Watts/m^2)")
 
 fig.autofmt_xdate()
 
-plt.show()
+if(saveImage):
+    plt.savefig("images/GOESxray.png", bbox_inches="tight")
+else:
+    plt.show()
 
 
-# In[49]:
+# In[24]:
 
 
 # Plots ACE proton flux data.
@@ -704,10 +712,13 @@ ax.set_title("ACE Low-Energy Proton Flux (EPAM)")
 ax.set_xlabel("Time of Observation (UTC)")
 ax.set_ylabel("Flux (particles/m^2*s^1*sr or pfu)")
 
-plt.show()
+if(saveImage):
+    plt.savefig("images/ACEproton.png", bbox_inches="tight")
+else:
+    plt.show()
 
 
-# In[50]:
+# In[25]:
 
 
 # Plots GOES proton flux data.
@@ -760,11 +771,15 @@ ax.set_title("GOES Proton Flux")
 ax.set_xlabel("Time of Observation (UTC)")
 ax.set_ylabel("Flux (particles/m^2*s^1*sr)")
 
-plt.show()
+if(saveImage):
+    plt.savefig("images/GOESproton.png", bbox_inches="tight")
+else:
+    plt.show()
 
 
 # In[ ]:
 
 
-
+if(saveImage):
+    print("Images saved to /images as ACEproton.png, GOESproton.png, GOESxray.png, and magnetometer.png.")
 
