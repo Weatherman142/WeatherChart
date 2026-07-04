@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[257]:
 
 
 import datetime
@@ -15,7 +15,7 @@ import modules.URLhandler as URLhandler
 import modules.timeHandler as timeHandler
 
 
-# In[2]:
+# In[258]:
 
 
 darkMode = False
@@ -27,7 +27,7 @@ timeName = 'timestamp'
 saveImage = True
 
 
-# In[3]:
+# In[259]:
 
 
 # This acquires the short-term DSCOVR data.
@@ -38,7 +38,7 @@ saveImage = True
 #dataDSCOVR = URLhandler.URLcollectorJSON(api_urlDSCOVR, "DSCOVR short-term")
 
 
-# In[4]:
+# In[260]:
 
 
 # This acquires the estimated Kp index. Not the same as the actual Kp index.
@@ -47,7 +47,7 @@ api_urlKP = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json"
 dataKP = URLhandler.URLcollectorJSON(api_urlKP, "Kp index")
 
 
-# In[5]:
+# In[261]:
 
 
 # This acquires the real-time solar wind magnetometer data.
@@ -56,7 +56,7 @@ api_urlRTSWmag = "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json"
 dataRTSWmag = URLhandler.URLcollectorJSON(api_urlRTSWmag, "RTSW mag")
 
 
-# In[6]:
+# In[262]:
 
 
 # This acquires the real-time solar wind proton data.
@@ -65,7 +65,7 @@ api_urlRTSWwind = "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json"
 dataRTSWwind = URLhandler.URLcollectorJSON(api_urlRTSWwind, "RTSW wind")
 
 
-# In[7]:
+# In[263]:
 
 
 # This acquires the GOES X-ray data. Primary is usually GOES-18.
@@ -74,7 +74,7 @@ api_urlGOESxray = "https://services.swpc.noaa.gov/json/goes/primary/xrays-7-day.
 dataGOESxray = URLhandler.URLcollectorJSON(api_urlGOESxray, "GOES X-ray")
 
 
-# In[8]:
+# In[264]:
 
 
 # This acquires the latest significant X-ray flares.
@@ -83,7 +83,7 @@ api_urlFlares = "https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-
 dataFlares = URLhandler.URLcollectorJSON(api_urlFlares, "peak X-ray flares")
 
 
-# In[9]:
+# In[265]:
 
 
 # This acquires the proton flux data. Primary is usually GOES-18.
@@ -92,7 +92,7 @@ api_urlGOESproton = "https://services.swpc.noaa.gov/json/goes/primary/integral-p
 dataGOESproton = URLhandler.URLcollectorJSON(api_urlGOESproton, "GOES proton")
 
 
-# In[10]:
+# In[266]:
 
 
 # This acquires the low-energy proton data from ACE's EPAM instrument.
@@ -101,7 +101,15 @@ api_urlACEproton = "https://services.swpc.noaa.gov/json/ace/epam/ace_epam_5m.jso
 dataACEproton = URLhandler.URLcollectorJSON(api_urlACEproton, "ACE EPAM protons")
 
 
-# In[11]:
+# In[267]:
+
+
+api_urlAurora = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json"
+
+dataAurora = URLhandler.URLcollectorJSON(api_urlAurora, "OVATION auroral data")
+
+
+# In[268]:
 
 
 # Processes the 1 Hz DSCOVR data.
@@ -127,7 +135,7 @@ dataACEproton = URLhandler.URLcollectorJSON(api_urlACEproton, "ACE EPAM protons"
 #     count01 += 1
 
 
-# In[12]:
+# In[269]:
 
 
 # Processes the minutely Kp data.
@@ -147,7 +155,7 @@ for i in dataKP:
     count02 += 1
 
 
-# In[13]:
+# In[270]:
 
 
 # Processes the minutely magnetometer data from either SOLAR-1 or ACE, depending on which is selected.
@@ -202,7 +210,7 @@ if(RTSWmagDataframe[timeName][0] == None):
             count03 += 1
 
 
-# In[14]:
+# In[271]:
 
 
 # Processes the minutely proton data from either DSCOVR or ACE, depending on which is selected above.
@@ -255,7 +263,7 @@ if(RTSWwindDataframe[timeName][0] == None):
             count04 += 1
 
 
-# In[15]:
+# In[272]:
 
 
 # Processes the GOES X-ray data.
@@ -284,7 +292,7 @@ for i in dataGOESxray:
         count05 += 1
 
 
-# In[16]:
+# In[273]:
 
 
 # Processes the significant flares over the last 7 days.
@@ -308,7 +316,7 @@ for i in dataFlares:
         count08 += 1
 
 
-# In[17]:
+# In[274]:
 
 
 # Processes the GOES proton flux data.
@@ -341,7 +349,7 @@ for i in dataGOESproton:
         count06 += 1
 
 
-# In[18]:
+# In[275]:
 
 
 # Processes the ACE low-energy proton flux.
@@ -374,7 +382,30 @@ for i in dataACEproton:
     count07 += 1
 
 
-# In[19]:
+# In[287]:
+
+
+# Processes the auroral data per the OVATION model. Needs optimization as it currently takes ~6 seconds to run.
+# For speed of access, going to be optional.
+processAurora = False
+if(processAurora):
+    auroraLen = len(dataAurora['coordinates'])
+
+    dictAurora = {'lon':    [None]*auroraLen,
+                'lat':    [None]*auroraLen,
+                'aurora': [None]*auroraLen}
+    auroraDataframe = pd.DataFrame(dictAurora)
+
+    count09 = 0
+    for i in dataAurora['coordinates']:
+        auroraDataframe.loc[count09, 'lon'] = 180-i[0]
+        auroraDataframe.loc[count09, 'lat'] = i[1]
+        auroraDataframe.loc[count09, 'aurora'] = i[2]
+
+        count09 += 1
+
+
+# In[277]:
 
 
 # Parse the timestamps into the correct format for plotting.
@@ -395,7 +426,7 @@ dateCurrent = datetime.datetime.now()
 dateOffset = (dateCurrent - dateInitial).total_seconds()/86400
 
 
-# In[20]:
+# In[278]:
 
 
 # Calculates the approximate conditions that are currently hitting Earth.
@@ -409,7 +440,7 @@ timeToArrivalMinutes = round(timeToArrival * (24 * 60))
 #print(timeToArrivalMinutes)
 
 
-# In[21]:
+# In[279]:
 
 
 # # Plots DSCOVR 1-second magnetometer data.
@@ -471,7 +502,7 @@ timeToArrivalMinutes = round(timeToArrival * (24 * 60))
 # plt.show()
 
 
-# In[22]:
+# In[280]:
 
 
 # Plots SOLAR-1/ACE 1-minute magnetometer and proton data.
@@ -521,7 +552,7 @@ ax2.set_yscale('log')
 ax4.set_yscale('log')
 
 # Number of minutes to be plotted.
-minutesPlotted = min(360, RTSWmagLen-1)
+minutesPlotted = min(240, RTSWmagLen-1)
 RTSWtimeLimit = [RTSWmagDataframe[timeName][minutesPlotted], RTSWmagDataframe[timeName][0]]
 
 # Set the size of the viewing window for the magnetometer data.
@@ -572,7 +603,7 @@ ax3.grid(True)
 ax4.grid(True)
 ax5.grid(True)
 
-ax1.set_title("Long Term Data using " + RTSWmagDataframe['source'][0] + " (up to 24 hours)\n" + \
+ax1.set_title(RTSWmagDataframe['source'][0] + " data as of " + str(RTSWmagDataframe[timeName][0]) + "Z\n" + \
               "Lead time: " + str(timeToArrivalMinutes) + " minutes")
 ax1.set_ylabel("Field Strength (nT)")
 ax2.set_ylabel("Density (1/cm^3)")
@@ -589,7 +620,7 @@ else:
     plt.show()
 
 
-# In[23]:
+# In[281]:
 
 
 # Plots GOES X-ray data.
@@ -656,7 +687,7 @@ else:
     plt.show()
 
 
-# In[24]:
+# In[282]:
 
 
 # Plots ACE proton flux data.
@@ -718,7 +749,7 @@ else:
     plt.show()
 
 
-# In[25]:
+# In[283]:
 
 
 # Plots GOES proton flux data.
@@ -777,7 +808,19 @@ else:
     plt.show()
 
 
-# In[ ]:
+# In[288]:
+
+
+if(processAurora):
+    plt.rcParams["figure.dpi"] = 300
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    ax.scatter(auroraDataframe['lon'], auroraDataframe['lat'], s=2, c=auroraDataframe['aurora'])
+
+    plt.setp(ax, xlim=[-180,180], ylim=[-90,90])
+
+
+# In[285]:
 
 
 if(saveImage):
