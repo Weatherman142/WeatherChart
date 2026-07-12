@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[17]:
 
 
 import numpy as np
@@ -13,20 +13,16 @@ import modules.URLhandler as URLhandler
 import modules.timeHandler as timeHandler
 
 
-# In[ ]:
+# In[18]:
 
 
 # Rounding is performed because the NWS API can't handle precision higher than 4 places.
 #lat = round(float(input("Enter the latitude of the city (e.g. Ames: 42.00, KOWA: 44.12):")), 4)
 #lon = round(float(input("Enter the longitude of the city (e.g. Ames: -93.62, KOWA: -93.26):")), 4)
 
-# Floater City:
-#lat = 48.8534951
-#lon = 2.3483915
-
-# Reno, NV:
-#lat = 39.48389
-#lon = -119.77111
+# Binghamton, NY:
+lat = 42.0987
+lon = -75.9180
 
 # Herriman, UT:
 #lat = 40.51060
@@ -37,8 +33,8 @@ import modules.timeHandler as timeHandler
 #lon = -93.26056
 
 # Ames:
-lat = 42.03470
-lon = -93.61990
+#lat = 42.03470
+#lon = -93.61990
 
 placeName = " for " + str(round(lat, 3)) + "°, " + str(round(lon, 3)) + "°"
 
@@ -51,7 +47,7 @@ backgroundColor = "xkcd:dark"
 axisColor = "xkcd:light grey"
 
 
-# In[25]:
+# In[19]:
 
 
 # General weather variable names that apply to all of the models.
@@ -84,7 +80,7 @@ colorName = "lineColor"
 linewidthName = "linewidth"
 
 
-# In[26]:
+# In[20]:
 
 
 # Names of variables relevant to the storm-relative helicity math.
@@ -112,7 +108,7 @@ s700hPa = "wind_speed_700hPa"
 s500hPa = "wind_speed_500hPa"
 
 
-# In[27]:
+# In[21]:
 
 
 # Model names as defined by the open-meteo API.
@@ -140,7 +136,7 @@ KMAname = "kma_seamless"
 ARPEGEname = "arpege_seamless"
 
 
-# In[28]:
+# In[22]:
 
 
 # Sets up the URL with the requested variables.
@@ -148,7 +144,7 @@ ARPEGEname = "arpege_seamless"
 api_URL_base = "https://api.open-meteo.com/v1/forecast"
 
 # Names of the variables requested from the API.
-variableNames = "&hourly="+temperatureName+","+rhName+","+dewpointName+","+feelsLikeName+","+cloudCoverName+","+windSpeedName+","+windGustsName+","+windDirName+","+pressureMSLname+","+rainName+","+snowName+","+CAPErawName+","+CINname
+variableNames = "&hourly="+','.join([temperatureName, rhName, dewpointName, feelsLikeName, cloudCoverName, windSpeedName, windGustsName, windDirName, pressureMSLname, rainName, snowName, CAPErawName, CINname])
 SRH3variableNames = "&hourly="+s1000hPa+","+s925hPa+","+s850hPa+","+s700hPa+","+d1000hPa+","+d925hPa+","+d850hPa+","+d700hPa
 SRH1variableNames = "&hourly="+s975hPa+","+s950hPa+","+s900hPa+","+s500hPa+","+d975hPa+","+d950hPa+","+d900hPa+","+d500hPa
 
@@ -158,7 +154,7 @@ SRH3variableUnits = "&wind_speed_unit=ms"
 SRH1variableUnits = "&wind_speed_unit=ms"
 
 # Enter in the number of forecast days. Must be an integer between 1 and 16.
-forecastDays = str(int(10))
+forecastDays = str(int(16))
 
 # Sets the latitude and longitude.
 urlLatLon = "?latitude=" + str(lat) + "&longitude=" + str(lon)
@@ -169,79 +165,17 @@ api_URL_common_SRH3 = api_URL_base + urlLatLon + SRH3variableNames + SRH3variabl
 api_URL_common_SRH1 = api_URL_base + urlLatLon + SRH1variableNames + SRH1variableUnits + "&forecast_days=" + forecastDays
 
 
-# In[29]:
+# In[23]:
 
 
-# NOAA model data (GFS, GFS_GC, HRRR, NBM) acquistion.
-api_URL_NOAA = api_URL_common + "&models=" + GFSname + "," + HRRRname + "," + NBMname + "," + GFS_GCname
+# Unified model collection system.
+modelList = ','.join([GFSname, HRRRname, NBMname, GFS_GCname, ECMWFname, ECMWF_AIname, GDPSname, RDPSname, HRDPSname, ICONname, UKMETname, BOMname, KMAname, ARPEGEname])
+api_URL_total = api_URL_common + "&models=" + modelList
 
-dataNOAA = URLhandler.URLcollectorJSON(api_URL_NOAA, "NOAA forecast data")
-
-
-# In[30]:
+dataModels = URLhandler.URLcollectorJSON(api_URL_total, 'all models')
 
 
-# European Centre for Medium-Range Forecast model data (ECMWF, ECMWF_AI) acquistion.
-api_URL_ECMWF = api_URL_common + "&models=" + ECMWFname + "," + ECMWF_AIname
-
-dataECMWF = URLhandler.URLcollectorJSON(api_URL_ECMWF, "ECMWF forecast data")
-
-
-# In[31]:
-
-
-# Environment Canada model data (GDPS, RDPS, HDRPS) acquistion.
-api_URL_GEM = api_URL_common + "&models=" + GDPSname + "," + RDPSname + "," + HRDPSname
-
-dataGEM = URLhandler.URLcollectorJSON(api_URL_GEM, "GEM forecast data")
-
-
-# In[32]:
-
-
-# DWD model data (ICON) acquistion.
-api_URL_DWD = api_URL_common + "&models=" + ICONname
-
-dataDWD = URLhandler.URLcollectorJSON(api_URL_DWD, "DWD forecast data")
-
-
-# In[33]:
-
-
-# UK Met Office model data (UKMET) acquistion.
-api_URL_UKMET = api_URL_common + "&models=" + UKMETname
-
-dataUKMET = URLhandler.URLcollectorJSON(api_URL_UKMET, "UKMET forecast data")
-
-
-# In[34]:
-
-
-# Bureau of Meteorology model data (BOM) acquistion.
-api_URL_BOM = api_URL_common + "&models=" + BOMname
-
-dataBOM = URLhandler.URLcollectorJSON(api_URL_BOM, "BOM forecast data")
-
-
-# In[35]:
-
-
-# Korean Meteorological Agency model data (KMA) acquistion.
-api_URL_KMA = api_URL_common + "&models=" + KMAname
-
-dataKMA = URLhandler.URLcollectorJSON(api_URL_KMA, "KMA forecast data")
-
-
-# In[36]:
-
-
-# Meteo-France model data (ARPEGE) acquistion.
-api_URL_ARPEGE = api_URL_common + "&models=" + ARPEGEname
-
-dataARPEGE = URLhandler.URLcollectorJSON(api_URL_ARPEGE, "APREGE forecast data")
-
-
-# In[37]:
+# In[24]:
 
 
 # Storm-relative helicity (0-3 km) data acquistion.
@@ -250,7 +184,7 @@ api_URL_SRH3 = api_URL_common_SRH3 + "&models="+ECMWFname+","+GFSname+","+HRRRna
 dataSRH3 = URLhandler.URLcollectorJSON(api_URL_SRH3, "SRH3 forecast data")
 
 
-# In[38]:
+# In[25]:
 
 
 # Storm-relative helicity (0-1 km) data acquistion.
@@ -259,22 +193,19 @@ api_URL_SRH1 = api_URL_common_SRH1 + "&models="+GFSname+","+HRRRname+","+GEMname
 dataSRH1 = URLhandler.URLcollectorJSON(api_URL_SRH1, "SRH1 forecast data")
 
 
-# In[ ]:
+# In[26]:
 
 
 print("Data downloaded.")
 
 
-# In[39]:
+# In[27]:
 
 
-dataLength = max(len(dataNOAA['hourly']['time']), len(dataECMWF['hourly']['time']),  len(dataGEM['hourly']['time']),  \
-                 len(dataDWD['hourly']['time']),  len(dataUKMET['hourly']['time']),  len(dataBOM['hourly']['time']),  \
-                 len(dataKMA['hourly']['time']),  len(dataARPEGE['hourly']['time']), len(dataSRH3['hourly']['time']), \
-                 len(dataSRH1['hourly']['time']))
+dataLength = max(len(dataModels['hourly']['time']), len(dataSRH1['hourly']['time']), len(dataSRH3['hourly']['time']))
 
 
-# In[40]:
+# In[28]:
 
 
 # Common dictionary format for all forecasts.
@@ -348,7 +279,7 @@ ARPEGEdataframe = pd.DataFrame(dictForecast)
 meanDataframe = pd.DataFrame(dictForecast)
 
 
-# In[41]:
+# In[29]:
 
 
 # Severe parameter calculation (SRH, EHI, LCL, STP).
@@ -515,7 +446,7 @@ def STPcalculator(dataFrameIn):
     return STPvalueList
 
 
-# In[42]:
+# In[30]:
 
 
 # DataFrameManager function and related functions.
@@ -622,14 +553,14 @@ def SRH1frameManager(dataFrameIn, dataFrameOut, modelName):
     return dataFrameOut
 
 
-# In[43]:
+# In[31]:
 
 
 linewidth = 0.80
 NBMlinewidth = 1.25
 
 
-# In[44]:
+# In[32]:
 
 
 # NOAA model data (GFS, GFS_GC, HRRR, NBM) processing.
@@ -638,8 +569,8 @@ NBMlinewidth = 1.25
 # Finally sets the name, line color, and line width for each.
 # May add the NAM at a later date.
 
-if('temperature_2m_gfs_global' in dataNOAA['hourly']):
-    GFSdataframe = dataFrameManager(dataNOAA, GFSdataframe, GFSname)
+if(('temperature_2m_' + GFSname) in dataModels['hourly']):
+    GFSdataframe = dataFrameManager(dataModels, GFSdataframe, GFSname)
     GFSdataframe = SRH3frameManager(dataSRH3, GFSdataframe, GFSname)
     GFSdataframe = SRH1frameManager(dataSRH1, GFSdataframe, GFSname)
     GFSdataframe[timeName] = timeHandler.timeParser(GFSdataframe[timeName])
@@ -647,15 +578,15 @@ if('temperature_2m_gfs_global' in dataNOAA['hourly']):
     GFSdataframe[colorName] = "royalblue"
 GFSdataframe[linewidthName] = linewidth
     
-if('temperature_2m_gfs_graphcast025' in dataNOAA['hourly']):
-    GFS_GCdataframe = dataFrameManager(dataNOAA, GFS_GCdataframe, GFS_GCname)
+if(('temperature_2m_' + GFS_GCname) in dataModels['hourly']):
+    GFS_GCdataframe = dataFrameManager(dataModels, GFS_GCdataframe, GFS_GCname)
     GFS_GCdataframe[timeName] = timeHandler.timeParser(GFS_GCdataframe[timeName])
     GFS_GCdataframe[modelName] = "Graphcast"
     GFS_GCdataframe[colorName] = "lightskyblue"
 GFS_GCdataframe[linewidthName] = linewidth
 
-if('temperature_2m_gfs_hrrr' in dataNOAA['hourly']):
-    HRRRdataframe = dataFrameManager(dataNOAA, HRRRdataframe, HRRRname)
+if(('temperature_2m_' + HRRRname) in dataModels['hourly']):
+    HRRRdataframe = dataFrameManager(dataModels, HRRRdataframe, HRRRname)
     #HRRRdataframe = SRH3frameManager(dataSRH3, HRRRdataframe, HRRRname)
     #HRRRdataframe = SRH1frameManager(dataSRH1, HRRRdataframe, HRRRname)
     HRRRdataframe[timeName] = timeHandler.timeParser(HRRRdataframe[timeName])
@@ -663,67 +594,67 @@ if('temperature_2m_gfs_hrrr' in dataNOAA['hourly']):
     HRRRdataframe[colorName] = "forestgreen"
 HRRRdataframe[linewidthName] = linewidth
 
-if('temperature_2m_ncep_nbm_conus' in dataNOAA['hourly']):
-    NBMdataframe = dataFrameManager(dataNOAA, NBMdataframe, NBMname)
+if(('temperature_2m_' + NBMname) in dataModels['hourly']):
+    NBMdataframe = dataFrameManager(dataModels, NBMdataframe, NBMname)
     NBMdataframe[timeName] = timeHandler.timeParser(NBMdataframe[timeName])
     NBMdataframe[modelName] = "NBM"
     NBMdataframe[colorName] = "red"
 NBMdataframe[linewidthName] = NBMlinewidth
 
 
-# In[45]:
+# In[34]:
 
 
 # European Centre for Medium-Range Forecast model data (ECMWF, ECMWF_AI) processing.
-if('temperature_2m_ecmwf_ifs025' in dataECMWF['hourly']):
-    ECMWFdataframe = dataFrameManager(dataECMWF, ECMWFdataframe, ECMWFname)
+if(('temperature_2m_' + ECMWFname) in dataModels['hourly']):
+    ECMWFdataframe = dataFrameManager(dataModels, ECMWFdataframe, ECMWFname)
     ECMWFdataframe = SRH3frameManager(dataSRH3, ECMWFdataframe, ECMWFname)
     ECMWFdataframe[timeName] = timeHandler.timeParser(ECMWFdataframe[timeName])
     ECMWFdataframe[modelName] = "ECMWF"
     ECMWFdataframe[colorName] = "xkcd:golden yellow"
 ECMWFdataframe[linewidthName] = linewidth
 
-if('temperature_2m_ecmwf_aifs025' in dataECMWF['hourly']):
-    ECMWF_AIdataframe = dataFrameManager(dataECMWF, ECMWF_AIdataframe, ECMWF_AIname)
+if(('temperature_2m_' + ECMWF_AIname) in dataModels['hourly']):
+    ECMWF_AIdataframe = dataFrameManager(dataModels, ECMWF_AIdataframe, ECMWF_AIname)
     ECMWF_AIdataframe[timeName] = timeHandler.timeParser(ECMWF_AIdataframe[timeName])
     ECMWF_AIdataframe[modelName] = "ECMWF AI"
     ECMWF_AIdataframe[colorName] = "xkcd:pumpkin"
 ECMWF_AIdataframe[linewidthName] = linewidth
 
 
-# In[46]:
+# In[35]:
 
 
 # Environment Canada model data (GDPS, RDPS, HDRPS) processing.
-if('temperature_2m_gem_global' in dataGEM['hourly']):
-    GDPSdataframe = dataFrameManager(dataGEM, GDPSdataframe, GDPSname)
+if(('temperature_2m_' + GDPSname) in dataModels['hourly']):
+    GDPSdataframe = dataFrameManager(dataModels, GDPSdataframe, GDPSname)
     GDPSdataframe = SRH3frameManager(dataSRH3, GDPSdataframe, GEMname)
     GDPSdataframe[timeName] = timeHandler.timeParser(GDPSdataframe[timeName])
     GDPSdataframe[modelName] = "GPDS"
     GDPSdataframe[colorName] = "xkcd:lilac"
 GDPSdataframe[linewidthName] = linewidth
 
-if('temperature_2m_gem_regional' in dataGEM['hourly']):
-    RDPSdataframe = dataFrameManager(dataGEM, RDPSdataframe, RDPSname)
+if(('temperature_2m_' + RDPSname) in dataModels['hourly']):
+    RDPSdataframe = dataFrameManager(dataModels, RDPSdataframe, RDPSname)
     RDPSdataframe[timeName] = timeHandler.timeParser(RDPSdataframe[timeName])
     RDPSdataframe[modelName] = "RDPS"
     RDPSdataframe[colorName] = "xkcd:electric purple"
 RDPSdataframe[linewidthName] = linewidth
 
-if('temperature_2m_gem_hrdps_continental' in dataGEM['hourly']):
-    HRDPSdataframe = dataFrameManager(dataGEM, HRDPSdataframe, HRDPSname)
+if(('temperature_2m_' + HRDPSname) in dataModels['hourly']):
+    HRDPSdataframe = dataFrameManager(dataModels, HRDPSdataframe, HRDPSname)
     HRDPSdataframe[timeName] = timeHandler.timeParser(HRDPSdataframe[timeName])
     HRDPSdataframe[modelName] = "HRDPS"
     HRDPSdataframe[colorName] = "xkcd:faded purple"
 HRDPSdataframe[linewidthName] = linewidth
 
 
-# In[47]:
+# In[36]:
 
 
 # DWD model data (ICON) processing.
-if('temperature_2m' in dataDWD['hourly']):
-    ICONdataframe = dataFrameManager(dataDWD, ICONdataframe, '')
+if(('temperature_2m_' + ICONname) in dataModels['hourly']):
+    ICONdataframe = dataFrameManager(dataModels, ICONdataframe, ICONname)
     ICONdataframe = SRH3frameManager(dataSRH3, ICONdataframe, ICONname)
     ICONdataframe = SRH1frameManager(dataSRH1, ICONdataframe, ICONname)
     ICONdataframe[timeName] = timeHandler.timeParser(ICONdataframe[timeName])
@@ -732,50 +663,50 @@ if('temperature_2m' in dataDWD['hourly']):
 ICONdataframe[linewidthName] = linewidth
 
 
-# In[48]:
+# In[37]:
 
 
 # UK Met Office model data (UKMET) processing.
-if('temperature_2m' in dataUKMET['hourly']):
-    UKMETdataframe = dataFrameManager(dataUKMET, UKMETdataframe, '')
-    UKMETdataframe = SRH3frameManager(dataSRH3, UKMETdataframe, 'ukmo_seamless')
-    UKMETdataframe = SRH1frameManager(dataSRH1, UKMETdataframe, 'ukmo_seamless')
+if(('temperature_2m_' + UKMETname) in dataModels['hourly']):
+    UKMETdataframe = dataFrameManager(dataModels, UKMETdataframe, UKMETname)
+    UKMETdataframe = SRH3frameManager(dataSRH3, UKMETdataframe, UKMETname)
+    UKMETdataframe = SRH1frameManager(dataSRH1, UKMETdataframe, UKMETname)
     UKMETdataframe[timeName] = timeHandler.timeParser(UKMETdataframe[timeName])
     UKMETdataframe[modelName] = "UKMET"
     UKMETdataframe[colorName] = "xkcd:green grey"
 UKMETdataframe[linewidthName] = linewidth
 
 
-# In[49]:
+# In[38]:
 
 
 # Bureau of Meteorology model data (BOM) processing.
-if('temperature_2m' in dataBOM['hourly']):
-    BOMdataframe = dataFrameManager(dataBOM, BOMdataframe, '')
+if(('temperature_2m_' + BOMname) in dataModels['hourly']):
+    BOMdataframe = dataFrameManager(dataModels, BOMdataframe, BOMname)
     BOMdataframe[timeName] = timeHandler.timeParser(BOMdataframe[timeName])
     BOMdataframe[modelName] = "BOM"
     BOMdataframe[colorName] = "xkcd:muted blue"
 BOMdataframe[linewidthName] = linewidth
 
 
-# In[50]:
+# In[39]:
 
 
 # Korean Meteorological Agency model data (KMA) processing.
-if('temperature_2m' in dataKMA['hourly']):
-    KMAdataframe = dataFrameManager(dataKMA, KMAdataframe, '')
+if(('temperature_2m_' + KMAname) in dataModels['hourly']):
+    KMAdataframe = dataFrameManager(dataModels, KMAdataframe, KMAname)
     KMAdataframe[timeName] = timeHandler.timeParser(KMAdataframe[timeName])
     KMAdataframe[modelName] = "KMA"
     KMAdataframe[colorName] = "xkcd:carnation pink"
 KMAdataframe[linewidthName] = linewidth
 
 
-# In[51]:
+# In[40]:
 
 
 # Meteo-France model data (ARPEGE) processing.
-if('temperature_2m' in dataARPEGE['hourly']):
-    ARPEGEdataframe = dataFrameManager(dataARPEGE, ARPEGEdataframe, '')
+if(('temperature_2m_' + ARPEGEname) in dataModels['hourly']):
+    ARPEGEdataframe = dataFrameManager(dataModels, ARPEGEdataframe, ARPEGEname)
     ARPEGEdataframe = SRH3frameManager(dataSRH3, ARPEGEdataframe, ARPEGEname)
     ARPEGEdataframe[timeName] = timeHandler.timeParser(ARPEGEdataframe[timeName])
     ARPEGEdataframe[modelName] = "ARPEGE"
@@ -783,7 +714,7 @@ if('temperature_2m' in dataARPEGE['hourly']):
 ARPEGEdataframe[linewidthName] = linewidth
 
 
-# In[52]:
+# In[41]:
 
 
 # Sets up the timestamps, model name, color, and linewidth for the mean plots.
@@ -795,7 +726,7 @@ meanDataframe[linewidthName] = NBMlinewidth
 meanMarkerStyle = dict(marker='.', markersize=meanDataframe[linewidthName][0]*2, linewidth=0, color=meanDataframe[colorName][0])
 
 
-# In[53]:
+# In[42]:
 
 
 # Sets which models are plotted and in what order.
@@ -838,7 +769,7 @@ variableList = (temperatureName,
                 STPname)
 
 
-# In[54]:
+# In[43]:
 
 
 # Finds the mean of all of the variables for each time step.
@@ -859,13 +790,13 @@ meanDataframe[rainTotalName]   = np.cumsum(meanDataframe[rainName])
 meanDataframe[snowTotalName]   = np.cumsum(meanDataframe[snowName])
 
 
-# In[ ]:
+# In[44]:
 
 
 print("Data processed.")
 
 
-# In[ ]:
+# In[45]:
 
 
 # Plots temperature, dew point, apparent temperature, relative humidity, and cloud cover.
@@ -950,7 +881,7 @@ else:
     plt.show()
 
 
-# In[ ]:
+# In[46]:
 
 
 # Plots wind speed, wind gust, wind direction, and sea-level pressure.
@@ -1011,7 +942,7 @@ else:
     plt.show()
 
 
-# In[ ]:
+# In[47]:
 
 
 # Plots rainfall, snowfall, rain accumulation, and snow accumulation.
@@ -1080,7 +1011,7 @@ else:
     plt.show()
 
 
-# In[ ]:
+# In[48]:
 
 
 # Plots CAPE, CIN, SRH1, SRH3, LCL height, EHI, and STP.
@@ -1173,9 +1104,15 @@ else:
     plt.show()
 
 
-# In[ ]:
+# In[49]:
 
 
 if(saveImage):
     print("Images saved to /images as precip.png, severe.png, thermo.png, and wind.png.")
+
+
+# In[ ]:
+
+
+
 
