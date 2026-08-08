@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[257]:
+# In[ ]:
 
 
 import datetime
-#%matplotlib inline
 import matplotlib.pyplot as plt
 from math import ceil, floor
 import numpy as np
@@ -15,7 +14,7 @@ import modules.URLhandler as URLhandler
 import modules.timeHandler as timeHandler
 
 
-# In[258]:
+# In[3]:
 
 
 darkMode = False
@@ -27,7 +26,7 @@ timeName = 'timestamp'
 saveImage = True
 
 
-# In[259]:
+# In[4]:
 
 
 # This acquires the short-term DSCOVR data.
@@ -38,7 +37,7 @@ saveImage = True
 #dataDSCOVR = URLhandler.URLcollectorJSON(api_urlDSCOVR, "DSCOVR short-term")
 
 
-# In[260]:
+# In[5]:
 
 
 # This acquires the estimated Kp index. Not the same as the actual Kp index.
@@ -47,7 +46,7 @@ api_urlKP = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json"
 dataKP = URLhandler.URLcollectorJSON(api_urlKP, "Kp index")
 
 
-# In[261]:
+# In[6]:
 
 
 # This acquires the real-time solar wind magnetometer data.
@@ -56,7 +55,7 @@ api_urlRTSWmag = "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json"
 dataRTSWmag = URLhandler.URLcollectorJSON(api_urlRTSWmag, "RTSW mag")
 
 
-# In[262]:
+# In[7]:
 
 
 # This acquires the real-time solar wind proton data.
@@ -65,7 +64,7 @@ api_urlRTSWwind = "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json"
 dataRTSWwind = URLhandler.URLcollectorJSON(api_urlRTSWwind, "RTSW wind")
 
 
-# In[263]:
+# In[8]:
 
 
 # This acquires the GOES X-ray data. Primary is usually GOES-18.
@@ -74,7 +73,7 @@ api_urlGOESxray = "https://services.swpc.noaa.gov/json/goes/primary/xrays-7-day.
 dataGOESxray = URLhandler.URLcollectorJSON(api_urlGOESxray, "GOES X-ray")
 
 
-# In[264]:
+# In[9]:
 
 
 # This acquires the latest significant X-ray flares.
@@ -83,7 +82,7 @@ api_urlFlares = "https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-
 dataFlares = URLhandler.URLcollectorJSON(api_urlFlares, "peak X-ray flares")
 
 
-# In[265]:
+# In[10]:
 
 
 # This acquires the proton flux data. Primary is usually GOES-18.
@@ -92,7 +91,7 @@ api_urlGOESproton = "https://services.swpc.noaa.gov/json/goes/primary/integral-p
 dataGOESproton = URLhandler.URLcollectorJSON(api_urlGOESproton, "GOES proton")
 
 
-# In[266]:
+# In[11]:
 
 
 # This acquires the low-energy proton data from ACE's EPAM instrument.
@@ -101,15 +100,27 @@ api_urlACEproton = "https://services.swpc.noaa.gov/json/ace/epam/ace_epam_5m.jso
 dataACEproton = URLhandler.URLcollectorJSON(api_urlACEproton, "ACE EPAM protons")
 
 
-# In[267]:
+# In[12]:
 
 
-api_urlAurora = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json"
+# This acquires the Earth forecast from the WSA-Enlil model.
+api_urlWSAenlil = "https://services.swpc.noaa.gov/json/enlil_time_series.json"
 
-dataAurora = URLhandler.URLcollectorJSON(api_urlAurora, "OVATION auroral data")
+dataWSAenlil = URLhandler.URLcollectorJSON(api_urlWSAenlil, "WSA Enlil forecast")
 
 
-# In[268]:
+# In[13]:
+
+
+# This acquires the OVATION auroral model data. Currently an optional plot due to processing time.
+processAurora = False
+if(processAurora):
+    api_urlAurora = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json"
+
+    dataAurora = URLhandler.URLcollectorJSON(api_urlAurora, "OVATION auroral data")
+
+
+# In[14]:
 
 
 # Processes the 1 Hz DSCOVR data.
@@ -135,7 +146,7 @@ dataAurora = URLhandler.URLcollectorJSON(api_urlAurora, "OVATION auroral data")
 #     count01 += 1
 
 
-# In[269]:
+# In[15]:
 
 
 # Processes the minutely Kp data.
@@ -155,7 +166,7 @@ for i in dataKP:
     count02 += 1
 
 
-# In[270]:
+# In[16]:
 
 
 # Processes the minutely magnetometer data from either SOLAR-1 or ACE, depending on which is selected.
@@ -210,7 +221,7 @@ if(RTSWmagDataframe[timeName][0] == None):
             count03 += 1
 
 
-# In[271]:
+# In[17]:
 
 
 # Processes the minutely proton data from either DSCOVR or ACE, depending on which is selected above.
@@ -263,7 +274,7 @@ if(RTSWwindDataframe[timeName][0] == None):
             count04 += 1
 
 
-# In[272]:
+# In[18]:
 
 
 # Processes the GOES X-ray data.
@@ -292,14 +303,23 @@ for i in dataGOESxray:
         count05 += 1
 
 
-# In[273]:
+# In[42]:
 
 
 # Processes the significant flares over the last 7 days.
 flaresLen = 0
+flaresCutoff = 0.000001
+
 for i in dataFlares:
-    if(i['max_xrlong'] >= 0.00001):
+    if(i['max_xrlong'] >= flaresCutoff):
         flaresLen += 1
+
+# In the event of an excessive number of flaring events, increase the cutoff from C1 to M1.
+if(flaresLen >= 50):
+    flaresCutoff = 0.00001
+    for i in dataFlares:
+        if(i['max_xrlong'] >= flaresCutoff):
+            flaresLen += 1
 
 dictFlares = {'maxClass':    [None]*flaresLen,
               'maxStrength': [None]*flaresLen,
@@ -308,7 +328,7 @@ flaresDataframe = pd.DataFrame(dictFlares)
 
 count08 = 0
 for i in dataFlares:
-    if(i['max_xrlong'] >= 0.00001):
+    if(i['max_xrlong'] >= flaresCutoff):
         flaresDataframe.loc[count08, 'maxClass'] = i['max_class']
         flaresDataframe.loc[count08, 'maxStrength'] = i['max_xrlong']
         flaresDataframe.loc[count08, 'maxTime'] = i['max_time']
@@ -316,7 +336,7 @@ for i in dataFlares:
         count08 += 1
 
 
-# In[274]:
+# In[43]:
 
 
 # Processes the GOES proton flux data.
@@ -349,7 +369,7 @@ for i in dataGOESproton:
         count06 += 1
 
 
-# In[275]:
+# In[44]:
 
 
 # Processes the ACE low-energy proton flux.
@@ -382,30 +402,52 @@ for i in dataACEproton:
     count07 += 1
 
 
-# In[287]:
+# In[45]:
 
 
-# Processes the auroral data per the OVATION model. Needs optimization as it currently takes ~6 seconds to run.
+# Processes the WSA-Enlil model data.
+WSAenlilLen = len(dataWSAenlil)
+
+dictWSAenlil = {'density':     [None]*WSAenlilLen,
+                'speed': [None]*WSAenlilLen,
+                timeName:      [None]*WSAenlilLen}
+WSAenlilDataframe = pd.DataFrame(dictWSAenlil)
+
+count09 = 0
+for i in dataWSAenlil:
+    WSAenlilDataframe.loc[count09, 'density'] = i['earth_particles_per_cm3']
+    WSAenlilDataframe.loc[count09, 'speed'] = i['v_r']
+
+    WSAenlilDataframe.loc[count09, timeName] = i['time_tag']
+
+    count09 += 1
+
+
+# In[46]:
+
+
+# Processes the auroral data per the OVATION model.
 # For speed of access, going to be optional.
-processAurora = False
 if(processAurora):
     auroraLen = len(dataAurora['coordinates'])
 
     dictAurora = {'lon':    [None]*auroraLen,
-                'lat':    [None]*auroraLen,
-                'aurora': [None]*auroraLen}
+                  'lat':    [None]*auroraLen,
+                  'aurora': [None]*auroraLen}
     auroraDataframe = pd.DataFrame(dictAurora)
 
-    count09 = 0
+    count20 = 0
     for i in dataAurora['coordinates']:
-        auroraDataframe.loc[count09, 'lon'] = 180-i[0]
-        auroraDataframe.loc[count09, 'lat'] = i[1]
-        auroraDataframe.loc[count09, 'aurora'] = i[2]
+        # Only plot above a specified latitude to save time.
+        if(i[1]>30):
+            auroraDataframe.loc[count20, 'lon'] = 180-i[0]
+            auroraDataframe.loc[count20, 'lat'] = i[1]
+            auroraDataframe.loc[count20, 'aurora'] = i[2]
 
-        count09 += 1
+        count20 += 1
 
 
-# In[277]:
+# In[ ]:
 
 
 # Parse the timestamps into the correct format for plotting.
@@ -414,10 +456,12 @@ KPdataframe[timeName] = timeHandler.timeParser(KPdataframe[timeName])
 RTSWmagDataframe[timeName] = timeHandler.timeParser(RTSWmagDataframe[timeName])
 RTSWwindDataframe[timeName] = timeHandler.timeParser(RTSWwindDataframe[timeName])
 GOESxrayDataframe[timeName] = timeHandler.timeParser(GOESxrayDataframe[timeName])
-flaresDataframe['maxTime'] = timeHandler.timeParser(flaresDataframe['maxTime'])
 GOESprotonDataframe[timeName] = timeHandler.timeParser(GOESprotonDataframe[timeName])
 ACEprotonDataframe[timeName] = timeHandler.timeParser(ACEprotonDataframe[timeName])
-
+WSAenlilDataframe[timeName] = timeHandler.timeParser(WSAenlilDataframe[timeName])
+if(flaresLen > 0): # This list can be zero in times of quiet solar conditions.
+    flaresDataframe['maxTime'] = timeHandler.timeParser(flaresDataframe['maxTime'])
+    
 # This is used to calculate the offset that has to be applied to the rectangles to allow them to be charted.
 # Outputs the time in days since January 1, 1970 which is the date from which datetime calculates for the numeric equivalent.
 # Technically, from 18Z December 31, 1969 due to time zones. Will need to be adjusted for DST.
@@ -426,7 +470,7 @@ dateCurrent = datetime.datetime.now()
 dateOffset = (dateCurrent - dateInitial).total_seconds()/86400
 
 
-# In[278]:
+# In[48]:
 
 
 # Calculates the approximate conditions that are currently hitting Earth.
@@ -440,7 +484,7 @@ timeToArrivalMinutes = round(timeToArrival * (24 * 60))
 #print(timeToArrivalMinutes)
 
 
-# In[279]:
+# In[49]:
 
 
 # # Plots DSCOVR 1-second magnetometer data.
@@ -502,7 +546,7 @@ timeToArrivalMinutes = round(timeToArrival * (24 * 60))
 # plt.show()
 
 
-# In[280]:
+# In[50]:
 
 
 # Plots SOLAR-1/ACE 1-minute magnetometer and proton data.
@@ -552,7 +596,7 @@ ax2.set_yscale('log')
 ax4.set_yscale('log')
 
 # Number of minutes to be plotted.
-minutesPlotted = min(240, RTSWmagLen-1)
+minutesPlotted = min(300, RTSWmagLen-1)
 RTSWtimeLimit = [RTSWmagDataframe[timeName][minutesPlotted], RTSWmagDataframe[timeName][0]]
 
 # Set the size of the viewing window for the magnetometer data.
@@ -603,12 +647,13 @@ ax3.grid(True)
 ax4.grid(True)
 ax5.grid(True)
 
+# '$' applies math script styling to the labels.
 ax1.set_title(RTSWmagDataframe['source'][0] + " data as of " + str(RTSWmagDataframe[timeName][0]) + "Z\n" + \
               "Lead time: " + str(timeToArrivalMinutes) + " minutes")
-ax1.set_ylabel("Field Strength (nT)")
-ax2.set_ylabel("Density (1/cm^3)")
-ax3.set_ylabel("Speed (km/s)")
-ax4.set_ylabel("Temperature (K)")
+ax1.set_ylabel("Field Strength ($nT$)")
+ax2.set_ylabel("Density (1/$cm^3$)")
+ax3.set_ylabel("Speed ($km/s$)")
+ax4.set_ylabel("Temperature ($K$)")
 ax5.set_ylabel("Planetary Kp Index")
 ax5.set_xlabel("Time of Observation (UTC)")
 
@@ -620,7 +665,7 @@ else:
     plt.show()
 
 
-# In[281]:
+# In[51]:
 
 
 # Plots GOES X-ray data.
@@ -677,7 +722,7 @@ ax.grid(True)
 
 ax.set_title("GOES X-Ray Flux")
 ax.set_xlabel("Time of Observation (UTC)")
-ax.set_ylabel("Flux (Watts/m^2)")
+ax.set_ylabel("Flux ($Watts/m^2$)")
 
 fig.autofmt_xdate()
 
@@ -687,7 +732,7 @@ else:
     plt.show()
 
 
-# In[282]:
+# In[52]:
 
 
 # Plots ACE proton flux data.
@@ -724,6 +769,7 @@ obsPlottedACE = min(hoursPlottedACE * int(60/5), ACEprotonLen)
 
 # To make the plot look better, adjust the viewing window accordingly.
 protonMax = max([i for i in ACEprotonDataframe['p1'][-obsPlottedACE:] if i is not None])
+protonMin = min([i for i in ACEprotonDataframe['p1'][-obsPlottedACE:] if i is not None])
 if(protonMax > 10000):
     protonBound = 1000000
 elif(protonMax > 1000):
@@ -741,7 +787,7 @@ ax.grid(True)
 
 ax.set_title("ACE Low-Energy Proton Flux (EPAM)")
 ax.set_xlabel("Time of Observation (UTC)")
-ax.set_ylabel("Flux (particles/m^2*s^1*sr or pfu)")
+ax.set_ylabel("Flux ($particles/m^2*s^1*sr$ or pfu)")
 
 if(saveImage):
     plt.savefig("images/ACEproton.png", bbox_inches="tight")
@@ -749,7 +795,7 @@ else:
     plt.show()
 
 
-# In[283]:
+# In[ ]:
 
 
 # Plots GOES proton flux data.
@@ -800,7 +846,7 @@ ax.grid(True)
 
 ax.set_title("GOES Proton Flux")
 ax.set_xlabel("Time of Observation (UTC)")
-ax.set_ylabel("Flux (particles/m^2*s^1*sr)")
+ax.set_ylabel("Flux ($particles/m^2*s^1*sr$)")
 
 if(saveImage):
     plt.savefig("images/GOESproton.png", bbox_inches="tight")
@@ -808,19 +854,53 @@ else:
     plt.show()
 
 
-# In[288]:
+# In[ ]:
+
+
+plt.rcParams["figure.dpi"] = 300
+fig, (ax1, ax2) = plt.subplots(2, figsize=(10, 6))
+
+if(darkMode):
+    ax.set(facecolor=backgroundColor)
+    ax.spines['bottom'].set_color(axisColor)
+    ax.spines['top'].set_color(axisColor) 
+    ax.spines['right'].set_color(axisColor)
+    ax.spines['left'].set_color(axisColor)
+    ax.tick_params(axis='x', colors=axisColor)
+    ax.tick_params(axis='y', colors=axisColor, which='both')
+    ax.yaxis.label.set_color(axisColor)
+    ax.xaxis.label.set_color(axisColor)
+    ax.title.set_color(axisColor)
+    fig.patch.set(facecolor=backgroundColor)
+
+ax1.plot(WSAenlilDataframe[timeName], WSAenlilDataframe['density'])
+ax2.plot(WSAenlilDataframe[timeName], WSAenlilDataframe['speed'])
+
+plt.setp(ax1, xlim=[WSAenlilDataframe[timeName][WSAenlilLen-1], WSAenlilDataframe[timeName][0]])
+plt.setp(ax2, xlim=[WSAenlilDataframe[timeName][WSAenlilLen-1], WSAenlilDataframe[timeName][0]])
+
+ax1.grid(True)
+ax2.grid(True)
+
+ax1.set_title("WSA-Enlil Forecast Data - Earth")
+ax1.set_ylabel("Density (1/$cm^3$)")
+ax2.set_ylabel("Speed ($km/s$)")
+ax2.set_xlabel("Time of Observation (UTC)")
+
+
+# In[ ]:
 
 
 if(processAurora):
     plt.rcParams["figure.dpi"] = 300
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    ax.scatter(auroraDataframe['lon'], auroraDataframe['lat'], s=2, c=auroraDataframe['aurora'])
+    ax.scatter(auroraDataframe['lon'], auroraDataframe['lat'], s=15, marker='.', c=auroraDataframe['aurora'])
 
-    plt.setp(ax, xlim=[-180,180], ylim=[-90,90])
+    plt.setp(ax, xlim=[-180,180], ylim=[30,90])
 
 
-# In[285]:
+# In[ ]:
 
 
 if(saveImage):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[17]:
+# In[1]:
 
 
 import numpy as np
@@ -13,7 +13,7 @@ import modules.URLhandler as URLhandler
 import modules.timeHandler as timeHandler
 
 
-# In[18]:
+# In[2]:
 
 
 # Rounding is performed because the NWS API can't handle precision higher than 4 places.
@@ -21,8 +21,8 @@ import modules.timeHandler as timeHandler
 #lon = round(float(input("Enter the longitude of the city (e.g. Ames: -93.62, KOWA: -93.26):")), 4)
 
 # Binghamton, NY:
-lat = 42.0987
-lon = -75.9180
+#lat = 42.0987
+#lon = -75.9180
 
 # Herriman, UT:
 #lat = 40.51060
@@ -33,8 +33,8 @@ lon = -75.9180
 #lon = -93.26056
 
 # Ames:
-#lat = 42.03470
-#lon = -93.61990
+lat = 42.03470
+lon = -93.61990
 
 placeName = " for " + str(round(lat, 3)) + "°, " + str(round(lon, 3)) + "°"
 
@@ -47,7 +47,7 @@ backgroundColor = "xkcd:dark"
 axisColor = "xkcd:light grey"
 
 
-# In[19]:
+# In[3]:
 
 
 # General weather variable names that apply to all of the models.
@@ -80,7 +80,7 @@ colorName = "lineColor"
 linewidthName = "linewidth"
 
 
-# In[20]:
+# In[4]:
 
 
 # Names of variables relevant to the storm-relative helicity math.
@@ -108,7 +108,7 @@ s700hPa = "wind_speed_700hPa"
 s500hPa = "wind_speed_500hPa"
 
 
-# In[21]:
+# In[5]:
 
 
 # Model names as defined by the open-meteo API.
@@ -136,7 +136,7 @@ KMAname = "kma_seamless"
 ARPEGEname = "arpege_seamless"
 
 
-# In[22]:
+# In[6]:
 
 
 # Sets up the URL with the requested variables.
@@ -160,52 +160,52 @@ forecastDays = str(int(16))
 urlLatLon = "?latitude=" + str(lat) + "&longitude=" + str(lon)
 
 # Combines the above variables.
-api_URL_common = api_URL_base + urlLatLon + variableNames + variableUnits + "&forecast_days=" + forecastDays
-api_URL_common_SRH3 = api_URL_base + urlLatLon + SRH3variableNames + SRH3variableUnits + "&forecast_days=" + forecastDays
-api_URL_common_SRH1 = api_URL_base + urlLatLon + SRH1variableNames + SRH1variableUnits + "&forecast_days=" + forecastDays
+api_URL_forecasting = api_URL_base + urlLatLon + variableNames + variableUnits + "&forecast_days=" + forecastDays
+api_URL_forecasting_SRH3 = api_URL_base + urlLatLon + SRH3variableNames + SRH3variableUnits + "&forecast_days=" + forecastDays
+api_URL_forecasting_SRH1 = api_URL_base + urlLatLon + SRH1variableNames + SRH1variableUnits + "&forecast_days=" + forecastDays
 
 
-# In[23]:
+# In[7]:
 
 
 # Unified model collection system.
 modelList = ','.join([GFSname, HRRRname, NBMname, GFS_GCname, ECMWFname, ECMWF_AIname, GDPSname, RDPSname, HRDPSname, ICONname, UKMETname, BOMname, KMAname, ARPEGEname])
-api_URL_total = api_URL_common + "&models=" + modelList
+api_URL_total = api_URL_forecasting + "&models=" + modelList
 
 dataModels = URLhandler.URLcollectorJSON(api_URL_total, 'all models')
 
 
-# In[24]:
+# In[8]:
 
 
 # Storm-relative helicity (0-3 km) data acquistion.
-api_URL_SRH3 = api_URL_common_SRH3 + "&models="+ECMWFname+","+GFSname+","+HRRRname+","+GEMname+","+ICONname+","+UKMETname+","+ARPEGEname
+api_URL_SRH3 = api_URL_forecasting_SRH3 + "&models=" + ','.join([ECMWFname, GFSname, HRRRname, GEMname, ICONname, UKMETname, ARPEGEname])
 
 dataSRH3 = URLhandler.URLcollectorJSON(api_URL_SRH3, "SRH3 forecast data")
 
 
-# In[25]:
+# In[9]:
 
 
 # Storm-relative helicity (0-1 km) data acquistion.
-api_URL_SRH1 = api_URL_common_SRH1 + "&models="+GFSname+","+HRRRname+","+GEMname+","+ICONname+","+UKMETname
+api_URL_SRH1 = api_URL_forecasting_SRH1 + "&models="+GFSname+","+HRRRname+","+GEMname+","+ICONname+","+UKMETname
 
 dataSRH1 = URLhandler.URLcollectorJSON(api_URL_SRH1, "SRH1 forecast data")
 
 
-# In[26]:
+# In[10]:
 
 
 print("Data downloaded.")
 
 
-# In[27]:
+# In[11]:
 
 
 dataLength = max(len(dataModels['hourly']['time']), len(dataSRH1['hourly']['time']), len(dataSRH3['hourly']['time']))
 
 
-# In[28]:
+# In[12]:
 
 
 # Common dictionary format for all forecasts.
@@ -279,7 +279,7 @@ ARPEGEdataframe = pd.DataFrame(dictForecast)
 meanDataframe = pd.DataFrame(dictForecast)
 
 
-# In[29]:
+# In[13]:
 
 
 # Severe parameter calculation (SRH, EHI, LCL, STP).
@@ -446,7 +446,7 @@ def STPcalculator(dataFrameIn):
     return STPvalueList
 
 
-# In[30]:
+# In[14]:
 
 
 # DataFrameManager function and related functions.
@@ -553,14 +553,14 @@ def SRH1frameManager(dataFrameIn, dataFrameOut, modelName):
     return dataFrameOut
 
 
-# In[31]:
+# In[15]:
 
 
 linewidth = 0.80
 NBMlinewidth = 1.25
 
 
-# In[32]:
+# In[16]:
 
 
 # NOAA model data (GFS, GFS_GC, HRRR, NBM) processing.
@@ -602,7 +602,7 @@ if(('temperature_2m_' + NBMname) in dataModels['hourly']):
 NBMdataframe[linewidthName] = NBMlinewidth
 
 
-# In[34]:
+# In[17]:
 
 
 # European Centre for Medium-Range Forecast model data (ECMWF, ECMWF_AI) processing.
@@ -622,7 +622,7 @@ if(('temperature_2m_' + ECMWF_AIname) in dataModels['hourly']):
 ECMWF_AIdataframe[linewidthName] = linewidth
 
 
-# In[35]:
+# In[18]:
 
 
 # Environment Canada model data (GDPS, RDPS, HDRPS) processing.
@@ -649,7 +649,7 @@ if(('temperature_2m_' + HRDPSname) in dataModels['hourly']):
 HRDPSdataframe[linewidthName] = linewidth
 
 
-# In[36]:
+# In[19]:
 
 
 # DWD model data (ICON) processing.
@@ -663,7 +663,7 @@ if(('temperature_2m_' + ICONname) in dataModels['hourly']):
 ICONdataframe[linewidthName] = linewidth
 
 
-# In[37]:
+# In[20]:
 
 
 # UK Met Office model data (UKMET) processing.
@@ -677,7 +677,7 @@ if(('temperature_2m_' + UKMETname) in dataModels['hourly']):
 UKMETdataframe[linewidthName] = linewidth
 
 
-# In[38]:
+# In[21]:
 
 
 # Bureau of Meteorology model data (BOM) processing.
@@ -689,7 +689,7 @@ if(('temperature_2m_' + BOMname) in dataModels['hourly']):
 BOMdataframe[linewidthName] = linewidth
 
 
-# In[39]:
+# In[22]:
 
 
 # Korean Meteorological Agency model data (KMA) processing.
@@ -701,7 +701,7 @@ if(('temperature_2m_' + KMAname) in dataModels['hourly']):
 KMAdataframe[linewidthName] = linewidth
 
 
-# In[40]:
+# In[23]:
 
 
 # Meteo-France model data (ARPEGE) processing.
@@ -714,7 +714,7 @@ if(('temperature_2m_' + ARPEGEname) in dataModels['hourly']):
 ARPEGEdataframe[linewidthName] = linewidth
 
 
-# In[41]:
+# In[24]:
 
 
 # Sets up the timestamps, model name, color, and linewidth for the mean plots.
@@ -726,7 +726,7 @@ meanDataframe[linewidthName] = NBMlinewidth
 meanMarkerStyle = dict(marker='.', markersize=meanDataframe[linewidthName][0]*2, linewidth=0, color=meanDataframe[colorName][0])
 
 
-# In[42]:
+# In[25]:
 
 
 # Sets which models are plotted and in what order.
@@ -769,7 +769,7 @@ variableList = (temperatureName,
                 STPname)
 
 
-# In[43]:
+# In[26]:
 
 
 # Finds the mean of all of the variables for each time step.
@@ -790,13 +790,13 @@ meanDataframe[rainTotalName]   = np.cumsum(meanDataframe[rainName])
 meanDataframe[snowTotalName]   = np.cumsum(meanDataframe[snowName])
 
 
-# In[44]:
+# In[27]:
 
 
 print("Data processed.")
 
 
-# In[45]:
+# In[28]:
 
 
 # Plots temperature, dew point, apparent temperature, relative humidity, and cloud cover.
@@ -881,7 +881,7 @@ else:
     plt.show()
 
 
-# In[46]:
+# In[29]:
 
 
 # Plots wind speed, wind gust, wind direction, and sea-level pressure.
@@ -942,7 +942,7 @@ else:
     plt.show()
 
 
-# In[47]:
+# In[30]:
 
 
 # Plots rainfall, snowfall, rain accumulation, and snow accumulation.
@@ -1011,7 +1011,7 @@ else:
     plt.show()
 
 
-# In[48]:
+# In[31]:
 
 
 # Plots CAPE, CIN, SRH1, SRH3, LCL height, EHI, and STP.
@@ -1104,7 +1104,7 @@ else:
     plt.show()
 
 
-# In[49]:
+# In[32]:
 
 
 if(saveImage):
