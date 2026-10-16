@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import datetime
@@ -12,12 +12,13 @@ import pandas as pd
 
 import modules.URLhandler as URLhandler
 import modules.timeHandler as timeHandler
+import modules.darkMode as darkPlotting
 
 
-# In[3]:
+# In[2]:
 
 
-darkMode = False
+darkMode = True
 backgroundColor = "xkcd:dark"
 axisColor = "xkcd:light grey"
 
@@ -123,32 +124,6 @@ if(processAurora):
 # In[14]:
 
 
-# Processes the 1 Hz DSCOVR data.
-# See above notice about discontinued data.
-
-# DSCOVRlen = len(dataDSCOVR)
-# dictDSCOVR = {'bt':        [None]*DSCOVRlen,
-#               'bz':        [None]*DSCOVRlen,
-#               'bx':        [None]*DSCOVRlen,
-#               'by':        [None]*DSCOVRlen,
-#               'timestamp': [None]*DSCOVRlen}
-# DSCOVRdataframe = pd.DataFrame(dictDSCOVR)
-
-# count01 = 0
-# for i in dataDSCOVR:
-#     # For some of these, it is as easy as grabbing the data directly from the JSON file.
-#     DSCOVRdataframe['bt'][count01] = i['bt']
-#     DSCOVRdataframe['bz'][count01] = i['bz_gsm']
-#     DSCOVRdataframe['bx'][count01] = i['bx_gsm']
-#     DSCOVRdataframe['by'][count01] = i['by_gsm']
-
-#     DSCOVRdataframe[timeName][count01] = i['time_tag']
-#     count01 += 1
-
-
-# In[15]:
-
-
 # Processes the minutely Kp data.
 KPlen = len(dataKP)
 dictKP = {'estimates': [None]*KPlen,
@@ -166,7 +141,7 @@ for i in dataKP:
     count02 += 1
 
 
-# In[16]:
+# In[15]:
 
 
 # Processes the minutely magnetometer data from either SOLAR-1 or ACE, depending on which is selected.
@@ -221,7 +196,7 @@ if(RTSWmagDataframe[timeName][0] == None):
             count03 += 1
 
 
-# In[17]:
+# In[16]:
 
 
 # Processes the minutely proton data from either DSCOVR or ACE, depending on which is selected above.
@@ -274,7 +249,7 @@ if(RTSWwindDataframe[timeName][0] == None):
             count04 += 1
 
 
-# In[18]:
+# In[17]:
 
 
 # Processes the GOES X-ray data.
@@ -303,22 +278,23 @@ for i in dataGOESxray:
         count05 += 1
 
 
-# In[42]:
+# In[18]:
 
 
 # Processes the significant flares over the last 7 days.
 flaresLen = 0
-flaresCutoff = 0.000001
+flaresCutoff = 0.000001  # C1-class
 
 for i in dataFlares:
-    if(i['max_xrlong'] >= flaresCutoff):
+    if(i['max_xrlong'] != None and i['max_xrlong'] >= flaresCutoff):
         flaresLen += 1
 
 # In the event of an excessive number of flaring events, increase the cutoff from C1 to M1.
-if(flaresLen >= 50):
-    flaresCutoff = 0.00001
+if(flaresLen >= 25):
+    flaresLen = 0
+    flaresCutoff = 0.00001  # M1-class
     for i in dataFlares:
-        if(i['max_xrlong'] >= flaresCutoff):
+        if(i['max_xrlong'] != None and i['max_xrlong'] >= flaresCutoff):
             flaresLen += 1
 
 dictFlares = {'maxClass':    [None]*flaresLen,
@@ -328,15 +304,15 @@ flaresDataframe = pd.DataFrame(dictFlares)
 
 count08 = 0
 for i in dataFlares:
-    if(i['max_xrlong'] >= flaresCutoff):
-        flaresDataframe.loc[count08, 'maxClass'] = i['max_class']
+    if(i['max_xrlong'] != None and i['max_xrlong'] >= flaresCutoff):
+        flaresDataframe.loc[count08, 'maxClass']    = i['max_class']
         flaresDataframe.loc[count08, 'maxStrength'] = i['max_xrlong']
-        flaresDataframe.loc[count08, 'maxTime'] = i['max_time']
+        flaresDataframe.loc[count08, 'maxTime']     = i['max_time']
 
         count08 += 1
 
 
-# In[43]:
+# In[19]:
 
 
 # Processes the GOES proton flux data.
@@ -369,7 +345,7 @@ for i in dataGOESproton:
         count06 += 1
 
 
-# In[44]:
+# In[20]:
 
 
 # Processes the ACE low-energy proton flux.
@@ -402,7 +378,7 @@ for i in dataACEproton:
     count07 += 1
 
 
-# In[45]:
+# In[21]:
 
 
 # Processes the WSA-Enlil model data.
@@ -423,7 +399,7 @@ for i in dataWSAenlil:
     count09 += 1
 
 
-# In[46]:
+# In[22]:
 
 
 # Processes the auroral data per the OVATION model.
@@ -447,7 +423,7 @@ if(processAurora):
         count20 += 1
 
 
-# In[ ]:
+# In[23]:
 
 
 # Parse the timestamps into the correct format for plotting.
@@ -470,7 +446,7 @@ dateCurrent = datetime.datetime.now()
 dateOffset = (dateCurrent - dateInitial).total_seconds()/86400
 
 
-# In[48]:
+# In[24]:
 
 
 # Calculates the approximate conditions that are currently hitting Earth.
@@ -484,69 +460,7 @@ timeToArrivalMinutes = round(timeToArrival * (24 * 60))
 #print(timeToArrivalMinutes)
 
 
-# In[49]:
-
-
-# # Plots DSCOVR 1-second magnetometer data.
-# plt.rcParams["figure.dpi"] = 150
-# fig, (ax1, ax2) = plt.subplots(2, figsize=(10, 8))
-
-# # Sets the plot color to a darker value. Mainly useful at night.
-# if(darkMode):
-#     fig.patch.set(facecolor=backgroundColor)
-#     for i in [ax1, ax2]:
-#         i.set(facecolor=backgroundColor)
-#         i.spines['bottom'].set_color(axisColor)
-#         i.spines['top'].set_color(axisColor) 
-#         i.spines['right'].set_color(axisColor)
-#         i.spines['left'].set_color(axisColor)
-#         i.tick_params(axis='x', colors=axisColor)
-#         i.tick_params(axis='y', colors=axisColor, which='both')
-#         i.yaxis.label.set_color(axisColor)
-#         i.xaxis.label.set_color(axisColor)
-#         i.title.set_color(axisColor)
-
-# # Set the size of the viewing window for the magnetometer data.
-# # Because sudden spikes can appear, this adjusts automatically.
-# magViewingLimitS = max(ceil(max((DSCOVRdataframe['bt']), key=abs)/10)*10, 10)
-# magLimitS = [-magViewingLimitS, magViewingLimitS]
-
-# # The order of these plots matter for layering.
-# ax1.plot(DSCOVRdataframe[timeName], DSCOVRdataframe['bx'], color='magenta', linewidth=1)
-# ax1.plot(DSCOVRdataframe[timeName], DSCOVRdataframe['by'], color='deepskyblue', linewidth=1)
-# ax1.plot(DSCOVRdataframe[timeName], DSCOVRdataframe['bt'], color='black', linewidth=1.5)
-# ax1.plot(DSCOVRdataframe[timeName], DSCOVRdataframe['bz'], color='red', linewidth=2)
-
-# ax2.plot(KPdataframe[timeName], KPdataframe['estimates'], color='green')
-
-# # Bolded centerline for the magnetometer 0 nT mark.
-# ax1.hlines(y=0, xmin=0, xmax=dateOffset, linewidth=1, color='k')
-
-# # Mark out the different geomagnetic categories (G1-G5).
-# ax2.hlines(y=4.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='yellow')
-# ax2.hlines(y=5.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='gold')
-# ax2.hlines(y=6.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='orange')
-# ax2.hlines(y=7.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='orangered')
-# ax2.hlines(y=8.80, xmin=0, xmax=dateOffset, linewidth=2, color='red')
-
-# # DSCOVRlen minus 1 accounts for the off-by-one issue with indexing.
-# plt.setp(ax1, xlim=[DSCOVRdataframe[timeName][DSCOVRlen-1], DSCOVRdataframe[timeName][0]], ylim=magLimitS)
-# plt.setp(ax2, xlim=[DSCOVRdataframe[timeName][DSCOVRlen-1], DSCOVRdataframe[timeName][0]], ylim=[0, 10])
-
-# ax1.grid(True)
-# ax2.grid(True)
-
-# ax1.set_title("Short Term Data (last 5 minutes)")
-# ax1.set_ylabel("Field Strength (nT)")
-# ax2.set_ylabel("Planetary Kp Index")
-# ax2.set_xlabel("Time of Observation (UTC)")
-
-# fig.autofmt_xdate()
-
-# plt.show()
-
-
-# In[50]:
+# In[ ]:
 
 
 # Plots SOLAR-1/ACE 1-minute magnetometer and proton data.
@@ -557,30 +471,25 @@ fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5, figsize=(10,15))
 if(darkMode):
     fig.patch.set(facecolor=backgroundColor)
     for i in [ax1, ax2, ax3, ax4, ax5]:
-        i.set(facecolor=backgroundColor)
-        i.spines['bottom'].set_color(axisColor)
-        i.spines['top'].set_color(axisColor) 
-        i.spines['right'].set_color(axisColor)
-        i.spines['left'].set_color(axisColor)
-        i.tick_params(axis='x', colors=axisColor)
-        i.tick_params(axis='y', colors=axisColor, which='both')
-        i.yaxis.label.set_color(axisColor)
-        i.xaxis.label.set_color(axisColor)
-        i.title.set_color(axisColor)
+        darkPlotting.darkPlot(i, backgroundColor, axisColor)
+    centerbtColor = 'white'
+else:
+    centerbtColor = 'black'
 
 # Bolded centerline for the magnetometer 0 nT mark.
-if(not darkMode):
-    ax1.hlines(y=0, xmin=0, xmax=dateOffset, linewidth=1, color='black')
-else:
-    ax1.hlines(y=0, xmin=0, xmax=dateOffset, linewidth=1, color='white')
+ax1.hlines(y=0, xmin=0, xmax=dateOffset, linewidth=1, color=centerbtColor)
+
+# Mark out the different geomagnetic categories (G1-G5).
+ax5.hlines(y=4.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='yellow')
+ax5.hlines(y=5.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='gold')
+ax5.hlines(y=6.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='orange')
+ax5.hlines(y=7.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='orangered')
+ax5.hlines(y=8.80, xmin=0, xmax=dateOffset, linewidth=2, color='red')
 
 # The order of these plots matter for layering.
 ax1.plot(RTSWmagDataframe[timeName], RTSWmagDataframe['bx'], color='magenta', linewidth=0.75)
 ax1.plot(RTSWmagDataframe[timeName], RTSWmagDataframe['by'], color='deepskyblue', linewidth=0.75)
-if(not darkMode):
-    ax1.plot(RTSWmagDataframe[timeName], RTSWmagDataframe['bt'], color='black', linewidth=1)
-else:
-    ax1.plot(RTSWmagDataframe[timeName], RTSWmagDataframe['bt'], color='white', linewidth=1)
+ax1.plot(RTSWmagDataframe[timeName], RTSWmagDataframe['bt'], color=centerbtColor, linewidth=1)
 ax1.plot(RTSWmagDataframe[timeName], RTSWmagDataframe['bz'], color='red', linewidth=1.5)
 
 ax2.plot(RTSWwindDataframe[timeName], RTSWwindDataframe['density'], color='orange')
@@ -596,7 +505,7 @@ ax2.set_yscale('log')
 ax4.set_yscale('log')
 
 # Number of minutes to be plotted.
-minutesPlotted = min(300, RTSWmagLen-1)
+minutesPlotted = min(480, RTSWmagLen-1)
 RTSWtimeLimit = [RTSWmagDataframe[timeName][minutesPlotted], RTSWmagDataframe[timeName][0]]
 
 # Set the size of the viewing window for the magnetometer data.
@@ -628,13 +537,6 @@ plt.setp(ax4, xlim=RTSWtimeLimit, ylim=tempLimit) # Temperature (K)
 plt.setp(ax5, xlim=RTSWtimeLimit, ylim=[0, 10]) #Kp index
 
 
-# Mark out the different geomagnetic categories (G1-G5).
-ax5.hlines(y=4.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='yellow')
-ax5.hlines(y=5.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='gold')
-ax5.hlines(y=6.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='orange')
-ax5.hlines(y=7.5, xmin=0, xmax=dateOffset, linewidth=1.5, color='orangered')
-ax5.hlines(y=8.80, xmin=0, xmax=dateOffset, linewidth=2, color='red')
-
 # Draw lines at the estimated solar wind parameters arriving at Earth now.
 ax1.vlines(x=dateOffset-timeToArrival, ymin=magLimitL[0], ymax=magLimitL[1], linewidth=1.5, color='g')
 ax2.vlines(x=dateOffset-timeToArrival, ymin=densityLimit[0], ymax=densityLimit[1], linewidth=1.5, color='g')
@@ -665,7 +567,7 @@ else:
     plt.show()
 
 
-# In[51]:
+# In[32]:
 
 
 # Plots GOES X-ray data.
@@ -674,16 +576,7 @@ fig, ax = plt.subplots(figsize=(10, 6))
 
 # Sets the plot color to a darker value. Mainly useful at night.
 if(darkMode):
-    ax.set(facecolor=backgroundColor)
-    ax.spines['bottom'].set_color(axisColor)
-    ax.spines['top'].set_color(axisColor) 
-    ax.spines['right'].set_color(axisColor)
-    ax.spines['left'].set_color(axisColor)
-    ax.tick_params(axis='x', colors=axisColor)
-    ax.tick_params(axis='y', colors=axisColor, which='both')
-    ax.yaxis.label.set_color(axisColor)
-    ax.xaxis.label.set_color(axisColor)
-    ax.title.set_color(axisColor)
+    darkPlotting.darkPlot(ax, backgroundColor, axisColor)
     fig.patch.set(facecolor=backgroundColor)
 
 # Lines for M- (black or white) and X- (red) class X-ray flares.
@@ -732,7 +625,7 @@ else:
     plt.show()
 
 
-# In[52]:
+# In[ ]:
 
 
 # Plots ACE proton flux data.
@@ -741,17 +634,13 @@ fig, ax = plt.subplots(figsize=(10, 6))
 
 # Sets the plot color to a darker value. Mainly useful at night.
 if(darkMode):
-    ax.set(facecolor=backgroundColor)
-    ax.spines['bottom'].set_color(axisColor)
-    ax.spines['top'].set_color(axisColor) 
-    ax.spines['right'].set_color(axisColor)
-    ax.spines['left'].set_color(axisColor)
-    ax.tick_params(axis='x', colors=axisColor)
-    ax.tick_params(axis='y', colors=axisColor, which='both')
-    ax.yaxis.label.set_color(axisColor)
-    ax.xaxis.label.set_color(axisColor)
-    ax.title.set_color(axisColor)
+    darkPlotting.darkPlot(ax, backgroundColor, axisColor)
     fig.patch.set(facecolor=backgroundColor)
+    p7color = 'violet'
+    p8color = 'magenta'
+else:
+    p7color = 'indigo'
+    p8color = 'purple'
 
 ACEthickness = 1
 ax.plot(ACEprotonDataframe[timeName], ACEprotonDataframe['p1'], color='red', linewidth=ACEthickness)
@@ -760,8 +649,8 @@ ax.plot(ACEprotonDataframe[timeName], ACEprotonDataframe['p3'], color='gold', li
 ax.plot(ACEprotonDataframe[timeName], ACEprotonDataframe['p4'], color='green', linewidth=ACEthickness)
 ax.plot(ACEprotonDataframe[timeName], ACEprotonDataframe['p5'], color='turquoise', linewidth=ACEthickness)
 ax.plot(ACEprotonDataframe[timeName], ACEprotonDataframe['p6'], color='blue', linewidth=ACEthickness)
-ax.plot(ACEprotonDataframe[timeName], ACEprotonDataframe['p7'], color='indigo', linewidth=ACEthickness)
-ax.plot(ACEprotonDataframe[timeName], ACEprotonDataframe['p8'], color='purple', linewidth=ACEthickness)
+ax.plot(ACEprotonDataframe[timeName], ACEprotonDataframe['p7'], color=p7color, linewidth=ACEthickness)
+ax.plot(ACEprotonDataframe[timeName], ACEprotonDataframe['p8'], color=p8color, linewidth=ACEthickness)
 
 # The proton flux is recorded every 5 minutes, so plotting by times requires adjustment.
 hoursPlottedACE = 24
@@ -804,25 +693,16 @@ fig, ax = plt.subplots(figsize=(10, 6))
 
 # Sets the plot color to a darker value. Mainly useful at night.
 if(darkMode):
-    ax.set(facecolor=backgroundColor)
-    ax.spines['bottom'].set_color(axisColor)
-    ax.spines['top'].set_color(axisColor) 
-    ax.spines['right'].set_color(axisColor)
-    ax.spines['left'].set_color(axisColor)
-    ax.tick_params(axis='x', colors=axisColor)
-    ax.tick_params(axis='y', colors=axisColor, which='both')
-    ax.yaxis.label.set_color(axisColor)
-    ax.xaxis.label.set_color(axisColor)
-    ax.title.set_color(axisColor)
+    darkPlotting.darkPlot(ax, backgroundColor, axisColor)
     fig.patch.set(facecolor=backgroundColor)
 
-ax.plot(GOESprotonDataframe[timeName], GOESprotonDataframe['500MeV'], color='orange')
-ax.plot(GOESprotonDataframe[timeName], GOESprotonDataframe['100MeV'], color='limegreen')
-ax.plot(GOESprotonDataframe[timeName], GOESprotonDataframe['50MeV'], color='blue')
-ax.plot(GOESprotonDataframe[timeName], GOESprotonDataframe['10MeV'], color='red', linewidth=2.0)
+ax.plot(GOESprotonDataframe[timeName], GOESprotonDataframe['500MeV'], color='orange', linewidth=1.0)
+ax.plot(GOESprotonDataframe[timeName], GOESprotonDataframe['100MeV'], color='limegreen', linewidth=1.0)
+ax.plot(GOESprotonDataframe[timeName], GOESprotonDataframe['50MeV'], color='blue', linewidth=1.0)
+ax.plot(GOESprotonDataframe[timeName], GOESprotonDataframe['10MeV'], color='red', linewidth=1.5)
 
 # The proton flux is recorded every 5 minutes, so plotting by times requires adjustment.
-hoursPlottedProton = 24
+hoursPlottedProton = hoursPlottedXray
 obsPlottedProton = min(hoursPlottedProton * int(60/5), GOESprotonLen)
 
 # Under normal conditions, matches the SWPC proton flux limits. Expands it in the case of S4+ conditions.
@@ -861,17 +741,9 @@ plt.rcParams["figure.dpi"] = 300
 fig, (ax1, ax2) = plt.subplots(2, figsize=(10, 6))
 
 if(darkMode):
-    ax.set(facecolor=backgroundColor)
-    ax.spines['bottom'].set_color(axisColor)
-    ax.spines['top'].set_color(axisColor) 
-    ax.spines['right'].set_color(axisColor)
-    ax.spines['left'].set_color(axisColor)
-    ax.tick_params(axis='x', colors=axisColor)
-    ax.tick_params(axis='y', colors=axisColor, which='both')
-    ax.yaxis.label.set_color(axisColor)
-    ax.xaxis.label.set_color(axisColor)
-    ax.title.set_color(axisColor)
     fig.patch.set(facecolor=backgroundColor)
+    for i in [ax1, ax2]:
+        darkPlotting.darkPlot(i, backgroundColor, axisColor)
 
 ax1.plot(WSAenlilDataframe[timeName], WSAenlilDataframe['density'])
 ax2.plot(WSAenlilDataframe[timeName], WSAenlilDataframe['speed'])
@@ -888,7 +760,7 @@ ax2.set_ylabel("Speed ($km/s$)")
 ax2.set_xlabel("Time of Observation (UTC)")
 
 
-# In[ ]:
+# In[30]:
 
 
 if(processAurora):
@@ -900,7 +772,7 @@ if(processAurora):
     plt.setp(ax, xlim=[-180,180], ylim=[30,90])
 
 
-# In[ ]:
+# In[31]:
 
 
 if(saveImage):

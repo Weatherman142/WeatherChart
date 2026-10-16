@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 import modules.URLhandler as URLhandler
 import modules.timeHandler as timeHandler
+import modules.darkMode as darkPlotting
 
 
 # In[2]:
@@ -42,7 +43,7 @@ saveImage = True
 dpiValue = 200
 
 # Dark mode control settings.
-darkMode = False
+darkMode = True
 backgroundColor = "xkcd:dark"
 axisColor = "xkcd:light grey"
 
@@ -782,8 +783,12 @@ for count in range(dataLength):
         for model in dataFrameList:
             if(model.loc[count, weather] != None):
                 valueList.append(model[weather][count])
-        meanDataframe.loc[count, weather] = np.nanmean(valueList)
-#print(meanDataframe)
+        # If every item in valueList is nan, don't take the mean.
+        if(np.isnan(valueList).all()):
+            meanDataframe.loc[count, weather] = None
+        else:
+            meanDataframe.loc[count, weather] = np.nanmean(valueList)
+
 
 # Calculating the mean precipitation total from the mean rate results in a smoother graph.
 meanDataframe[rainTotalName]   = np.cumsum(meanDataframe[rainName])
@@ -796,7 +801,7 @@ meanDataframe[snowTotalName]   = np.cumsum(meanDataframe[snowName])
 print("Data processed.")
 
 
-# In[28]:
+# In[ ]:
 
 
 # Plots temperature, dew point, apparent temperature, relative humidity, and cloud cover.
@@ -808,16 +813,7 @@ fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5, figsize=(10,15))
 if(darkMode):
     fig.patch.set(facecolor=backgroundColor)
     for i in [ax1, ax2, ax3, ax4, ax5]:
-        i.set(facecolor=backgroundColor)
-        i.spines['bottom'].set_color(axisColor)
-        i.spines['top'].set_color(axisColor) 
-        i.spines['right'].set_color(axisColor)
-        i.spines['left'].set_color(axisColor)
-        i.tick_params(axis='x', colors=axisColor)
-        i.tick_params(axis='y', colors=axisColor, which='both')
-        i.yaxis.label.set_color(axisColor)
-        i.xaxis.label.set_color(axisColor)
-        i.title.set_color(axisColor)
+        darkPlotting.darkPlot(i, backgroundColor, axisColor)
         
 # Iterates through the list of DataFrames. Much easier to work with than listing all of them out.
 # Then plots the average of all of the models.
@@ -873,7 +869,10 @@ plt.setp(ax4, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[
 plt.setp(ax5, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[-1]], ylim=[-5, 105])
 
 # Sets the legend and size of it.
-leg = ax5.legend(loc=(0, -0.5), ncol=6)
+if(darkMode):
+    ax5.legend(loc=(0, -0.5), ncol=6, facecolor=backgroundColor, labelcolor=axisColor)
+else:
+    ax5.legend(loc=(0, -0.5), ncol=6)
 
 if(saveImage):
     plt.savefig("images/thermo.png", bbox_inches="tight")
@@ -881,7 +880,7 @@ else:
     plt.show()
 
 
-# In[29]:
+# In[ ]:
 
 
 # Plots wind speed, wind gust, wind direction, and sea-level pressure.
@@ -893,16 +892,7 @@ fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(10,9))
 if(darkMode):
     fig.patch.set(facecolor=backgroundColor)
     for i in [ax1, ax2, ax3]:
-        i.set(facecolor=backgroundColor)
-        i.spines['bottom'].set_color(axisColor)
-        i.spines['top'].set_color(axisColor) 
-        i.spines['right'].set_color(axisColor)
-        i.spines['left'].set_color(axisColor)
-        i.tick_params(axis='x', colors=axisColor)
-        i.tick_params(axis='y', colors=axisColor, which='both')
-        i.yaxis.label.set_color(axisColor)
-        i.xaxis.label.set_color(axisColor)
-        i.title.set_color(axisColor)
+        darkPlotting.darkPlot(i, backgroundColor, axisColor)
 
 # Iterates through the list of DataFrames. Much easier to work with than listing all of them out.
 # Plots wind speed information.
@@ -934,7 +924,10 @@ plt.setp(ax1, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[
 plt.setp(ax2, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[-1]], ylim=[0, 360])
 plt.setp(ax3, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[-1]])
 
-leg = ax3.legend(loc=(0, -0.5), ncol=6)
+if(darkMode):
+    ax3.legend(loc=(0, -0.5), ncol=6, facecolor=backgroundColor, labelcolor=axisColor)
+else:
+    ax3.legend(loc=(0, -0.5), ncol=6)
 
 if(saveImage):
     plt.savefig("images/wind.png", bbox_inches="tight")
@@ -942,7 +935,7 @@ else:
     plt.show()
 
 
-# In[30]:
+# In[ ]:
 
 
 # Plots rainfall, snowfall, rain accumulation, and snow accumulation.
@@ -954,17 +947,8 @@ fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, figsize=(10,12))
 if(darkMode):
     fig.patch.set(facecolor=backgroundColor)
     for i in [ax1, ax2, ax3, ax4]:
-        i.set(facecolor=backgroundColor)
-        i.spines['bottom'].set_color(axisColor)
-        i.spines['top'].set_color(axisColor) 
-        i.spines['right'].set_color(axisColor)
-        i.spines['left'].set_color(axisColor)
-        i.tick_params(axis='x', colors=axisColor)
-        i.tick_params(axis='y', colors=axisColor, which='both')
-        i.yaxis.label.set_color(axisColor)
-        i.xaxis.label.set_color(axisColor)
-        i.title.set_color(axisColor)
-
+        darkPlotting.darkPlot(i, backgroundColor, axisColor)
+        
 # Iterates through the list of DataFrames. Much easier to work with than listing all of them out.
 # Plots rainfall rate information.
 for i in dataFrameList:
@@ -1003,7 +987,10 @@ plt.setp(ax2, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[
 plt.setp(ax3, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[-1]])
 plt.setp(ax4, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[-1]])
 
-leg = ax4.legend(loc=(0, -0.5), ncol=6)
+if(darkMode):
+    ax4.legend(loc=(0, -0.5), ncol=6, facecolor=backgroundColor, labelcolor=axisColor)
+else:
+    ax4.legend(loc=(0, -0.5), ncol=6)
 
 if(saveImage):
     plt.savefig("images/precip.png", bbox_inches="tight")
@@ -1011,7 +998,7 @@ else:
     plt.show()
 
 
-# In[31]:
+# In[38]:
 
 
 # Plots CAPE, CIN, SRH1, SRH3, LCL height, EHI, and STP.
@@ -1023,16 +1010,7 @@ fig, (ax1, ax2, ax3, ax4, ax5, ax6, ax7) = plt.subplots(7, figsize=(10,21))
 if(darkMode):
     fig.patch.set(facecolor=backgroundColor)
     for i in [ax1, ax2, ax3, ax4, ax5, ax6, ax7]:
-        i.set(facecolor=backgroundColor)
-        i.spines['bottom'].set_color(axisColor)
-        i.spines['top'].set_color(axisColor) 
-        i.spines['right'].set_color(axisColor)
-        i.spines['left'].set_color(axisColor)
-        i.tick_params(axis='x', colors=axisColor)
-        i.tick_params(axis='y', colors=axisColor, which='both')
-        i.yaxis.label.set_color(axisColor)
-        i.xaxis.label.set_color(axisColor)
-        i.title.set_color(axisColor)
+        darkPlotting.darkPlot(i, backgroundColor, axisColor)
 
 # Iterates through the list of DataFrames. Much easier to work with than listing all of them out.
 # Plots Convective Available Potential Energy (CAPE).
@@ -1096,7 +1074,10 @@ plt.setp(ax5, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[
 plt.setp(ax6, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[-1]])
 plt.setp(ax7, xlim=[GFSdataframe[timeName].iloc[0], GFSdataframe[timeName].iloc[-1]])
 
-leg = ax7.legend(loc=(0, -0.5), ncol=6)
+if(darkMode):
+    ax7.legend(loc=(0, -0.5), ncol=6, facecolor=backgroundColor, labelcolor=axisColor)
+else:
+    ax7.legend(loc=(0, -0.5), ncol=6)
 
 if(saveImage):
     plt.savefig("images/severe.png", bbox_inches="tight")
